@@ -3,9 +3,10 @@ import java.util.BitSet;
 
 /**
  * 去重工具类
- * @author admin
- *
- */
+ * @author：wanghaibo 
+ * @creattime：2016年9月9日 下午4:58:33 
+ * 
+ */  
 public class RepeatedJudgment {
 	BitSet onebittree=null,twobittree=null,threebittree=null;
 	int size=268435455;

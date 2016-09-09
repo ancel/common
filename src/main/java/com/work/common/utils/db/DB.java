@@ -4,19 +4,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-/**
- * 
- * 创建人：wanghaibo <br>
- * 创建时间：2015-4-20 下午3:31:35 <br>
- * 功能描述： <br>
- * 数据库管理
- * 版本： <br>
- * ====================================== <br>
- * 修改记录 <br>
- * ====================================== <br>
- * 序号 姓名 日期 版本 简单描述 <br>
- * 
- */  
 
 public class DB {
 	private String driver;

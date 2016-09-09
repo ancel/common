@@ -21,6 +21,7 @@ import sun.misc.BASE64Encoder;
  * JCE下载地址：http://www.oracle.com/technetwork/java/javase/downloads/index.html
  */  
 
+@SuppressWarnings("restriction")
 public class AES {
     
     /**

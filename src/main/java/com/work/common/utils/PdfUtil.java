@@ -8,8 +8,6 @@ import org.apache.pdfbox.pdfparser.PDFParser;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.util.PDFTextStripper;
 
-import com.work.common.utils.RegexTool;
-
 public class PdfUtil {
 	
 	/**
@@ -58,7 +56,7 @@ public class PdfUtil {
 		String content = PdfUtil.getTextFromPDF(pdfFilePath);
 		String[] locationStr = content.split("\\r\\n");
 		for (String string : locationStr) {
-			if(RegexTool.check(RegexTool.REG_NUMBER, string.substring(0, 1))){
+			if(Regex.check(Regex.REG_NUMBER, string.substring(0, 1))){
 				System.out.println(string);
 				String[] strs = string.split(" ");
 				for (String string2 : strs) {

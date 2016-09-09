@@ -29,6 +29,7 @@ import sun.misc.BASE64Encoder;
  * 
  */  
 
+@SuppressWarnings("restriction")
 public class EncryptionUtil {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(EncryptionUtil.class);

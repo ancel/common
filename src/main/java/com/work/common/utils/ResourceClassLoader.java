@@ -7,10 +7,11 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 /**
- * author：wanghaibo 
- * createtime：2015-8-9 上午2:24:44 
  * 自定义类加载器，加载程序以外的类
- */
+ * @author：wanghaibo 
+ * @creattime：2016年9月9日 下午4:58:49 
+ * 
+ */  
 public class ResourceClassLoader extends URLClassLoader {
 	
 	private String name;
