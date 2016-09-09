@@ -14,7 +14,7 @@ import java.net.URLClassLoader;
  */
 
 public class TestMain {
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "resource" })
 	public static void main(String[] args) {
 		try {
 			//第一种  配置成文件格式

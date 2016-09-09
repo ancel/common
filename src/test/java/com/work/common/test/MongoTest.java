@@ -2,7 +2,6 @@ package com.work.common.test;
 
 import java.util.List;
 
-import org.apache.commons.dbutils.DbUtils;
 import org.junit.Test;
 
 import com.mongodb.BasicDBObject;
@@ -12,6 +11,7 @@ import com.mongodb.DBObject;
 import com.work.common.utils.db.MongoDBUtil;
 
 public class MongoTest {
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testQuery(){
 		String ip = "172.18.19.121";

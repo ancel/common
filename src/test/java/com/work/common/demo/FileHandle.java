@@ -100,6 +100,7 @@ public class FileHandle {
 		}
 	}
 
+	@SuppressWarnings("resource")
 	public void readRandomAccessFile() {
 		try {
 			// RandomAccessFile raf = new
