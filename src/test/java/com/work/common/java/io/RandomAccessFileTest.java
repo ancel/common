@@ -7,6 +7,7 @@ import java.io.RandomAccessFile;
 import org.junit.Test;
 
 public class RandomAccessFileTest {
+	@SuppressWarnings("resource")
 	@Test
 	public void testSeek() {
 		String filePath = "C:\\Users\\Li Yujie\\Desktop\\新建文本文档 (2).txt";
