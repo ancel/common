@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.work.common.constant.CharSet;
-import com.work.common.enums.FormatEnum;
+import com.work.common.enums.FileType;
 import com.work.common.utils.http.HttpClientUtil;
 /**
  * 百度地图工具类
@@ -31,7 +31,7 @@ public class BaiduMapUtil {
 	 * @param ak
 	 * @return
 	 */
-	public static Map<String, String> getLngAndLat(String address,FormatEnum format,String ak){
+	public static Map<String, String> getLngAndLat(String address,FileType format,String ak){
 		String responseStr = "";
 		try {
 			responseStr = HttpClientUtil.getHttpResponseByGet(MessageFormat.format(BAIDU_MAP_GEOCODER_API, address,format,ak,"",""),CharSet.UTF_8);
@@ -49,7 +49,7 @@ public class BaiduMapUtil {
 	 * @param format
 	 * @return
 	 */
-	public static  Map<String, String> getLngAndLat(String address,FormatEnum format){
+	public static  Map<String, String> getLngAndLat(String address,FileType format){
 		String responseStr = "";
 		try {
 			responseStr = HttpClientUtil.getHttpResponseByGet(MessageFormat.format(BAIDU_MAP_GEOCODER_API, address,format,AK,"",""),CharSet.UTF_8);
@@ -69,7 +69,7 @@ public class BaiduMapUtil {
 	public static  Map<String, String> getLngAndLat(String address){
 		String responseStr = "";
 		try {
-			responseStr = HttpClientUtil.getHttpResponseByGet(MessageFormat.format(BAIDU_MAP_GEOCODER_API, address,FormatEnum.json,AK,"",""),CharSet.UTF_8);
+			responseStr = HttpClientUtil.getHttpResponseByGet(MessageFormat.format(BAIDU_MAP_GEOCODER_API, address,FileType.json,AK,"",""),CharSet.UTF_8);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -86,7 +86,7 @@ public class BaiduMapUtil {
 	 */
 	public static  Map<String, String> getLngAndLat(String city,String address){
 		String responseStr = "";
-		String url = MessageFormat.format(BAIDU_MAP_GEOCODER_API, address,FormatEnum.json,AK,"",city);
+		String url = MessageFormat.format(BAIDU_MAP_GEOCODER_API, address,FileType.json,AK,"",city);
 		//System.out.println(url);
 		try {
 			responseStr = HttpClientUtil.getHttpResponseByGet(url,CharSet.UTF_8);
@@ -140,7 +140,7 @@ public class BaiduMapUtil {
 	 */
 	public static String getAddress(String lat,String lng){
 		String responseStr = "";
-		String url = MessageFormat.format(BAIDU_MAP_GEOCODER_API2, AK,"",lat,lng,FormatEnum.json,"");
+		String url = MessageFormat.format(BAIDU_MAP_GEOCODER_API2, AK,"",lat,lng,FileType.json,"");
 		try {
 			responseStr = HttpClientUtil.getHttpResponseByGet(url,CharSet.UTF_8);
 			JSONObject json = JSONObject.fromObject(responseStr);

@@ -7,11 +7,8 @@ import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
 
+
 /**
- * 
- * 创建人：wanghaibo 
- * 创建时间：2015-9-30 下午3:51:21 
- * 功能描述： 
  * 
  * 参考链接：http://www.awaysoft.com/taor/aes-cbc-%E7%9B%B8%E4%BA%92%E5%8A%A0%E8%A7%A3%E5%AF%86-javaphpc.html
  * 
@@ -19,8 +16,11 @@ import sun.misc.BASE64Encoder;
  * JCE：Java Cryptography Extension（JCE）是一组包，它们提供用于加密、密钥生成和协商以及 Message Authentication Code（MAC）算法的框架和实现。
  * 		它提供对对称、不对称、块和流密码的加密支持，它还支持安全流和密封的对象。它不对外出口，用它开发完成封装后将无法调用。
  * JCE下载地址：http://www.oracle.com/technetwork/java/javase/downloads/index.html
+ * 
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午2:57:36 
+ * 
  */  
-
 @SuppressWarnings("restriction")
 public class AES {
     

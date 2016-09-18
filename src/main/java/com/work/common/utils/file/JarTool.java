@@ -1,8 +1,12 @@
 package com.work.common.utils.file;
 import java.io.File;
+
 /**
- * 获取打包后jar的路径信息
- */
+ * 获取打包后jar的路径信息 
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午3:03:02 
+ * 
+ */  
 public class JarTool {
 	//获取jar绝对路径
 	public static String getJarPath(){

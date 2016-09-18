@@ -16,9 +16,10 @@ import org.supercsv.prefs.CsvPreference;
 
 /**
  * csv文件读取，使用superCSV
- * @author admin
- *
- */
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午2:59:39 
+ * 
+ */  
 public class CsvParser implements Iterator<List<String>>{
     
     private static final Logger logger = LoggerFactory.getLogger(CsvParser.class);

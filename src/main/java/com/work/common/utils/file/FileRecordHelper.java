@@ -7,13 +7,16 @@ import java.util.Map;
 import java.util.Set;
 
 import com.work.common.constant.CharSet;
-import com.work.common.constant.CommonConstant;
+import com.work.common.constant.FileConstant;
 
 /**
  * 写数据,每n行写一次
- * @author admin
- *
- */
+ * 
+ * 
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午5:13:39 
+ * 
+ */  
 public class FileRecordHelper {
 	public static Map<String, List<String>> map = new HashMap<>();
 	public static int flushNum = 50;
@@ -35,7 +38,7 @@ public class FileRecordHelper {
 			if(lineNum%flushNum==0){
 				StringBuffer sb = new StringBuffer();
 				for (String string : record) {
-						sb.append(string).append(CommonConstant.LINE_SEPARATOR);
+						sb.append(string).append(FileConstant.LINE_SEPARATOR);
 				}
 				FileUtil.write(fileName, sb.toString(), CharSet.UTF_8, false);
 				record.clear();
@@ -54,7 +57,7 @@ public class FileRecordHelper {
 			StringBuffer sb = new StringBuffer();
 			List<String> record = map.get(key);
 			for (String string : record) {
-				sb.append(string).append(CommonConstant.LINE_SEPARATOR);
+				sb.append(string).append(FileConstant.LINE_SEPARATOR);
 			}
 			FileUtil.write(key, sb.toString(), CharSet.UTF_8, false);
 			record.clear();

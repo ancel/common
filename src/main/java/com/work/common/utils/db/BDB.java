@@ -24,21 +24,11 @@ import com.sleepycat.je.Transaction;
 import com.sleepycat.je.TransactionConfig;
 
 /**
+ * Berkeley DB，一个嵌入式key-value数据库
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午2:49:39 
  * 
- * 
- * 创建人：wanghaibo <br>
- * 创建时间：2015-3-3 下午3:37:24 <br>
- * 功能描述： <br>
- * Berkeley DB
- * 一个嵌入式数据库
- * 
- * 版本： <br>
- * ====================================== <br>
- * 修改记录 <br>
- * ====================================== <br>
- * 序号 姓名 日期 版本 简单描述 <br>
- *
- */
+ */  
 public class BDB {
 
 	public static Logger LOGGER = LoggerFactory.getLogger(BDB.class);
@@ -60,7 +50,7 @@ public class BDB {
 		this.dbName = dbName;
 	}
 
-	/*
+	/**
 	 * 打开当前数据库
 	 */
 	public void openDatabase() {

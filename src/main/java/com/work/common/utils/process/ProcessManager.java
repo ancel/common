@@ -9,20 +9,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 
+
 /**
- * 
- * 创建人：wanghaibo <br>
- * 创建时间：2015-4-8 下午2:57:07 <br>
- * 功能描述： <br>
  * 进程管理类
- * 版本： <br>
- * ====================================== <br>
- * 修改记录 <br>
- * ====================================== <br>
- * 序号 姓名 日期 版本 简单描述 <br>
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午3:16:03 
  * 
  */  
-
 public class ProcessManager {
 	public static final int SUCCESS = 0; // 表示程序执行成功
 
@@ -45,7 +38,6 @@ public class ProcessManager {
 		try {
 			//进程启动
 			Process process = Runtime.getRuntime().exec(command);
-//			Process process = new ProcessBuilder(command, "").start();
 			processes.put(pid, process);
 			//等待进程结束线程,结束后从map中移除
 			new Thread(new ProcessThread(pid,process)).start();
@@ -69,8 +61,6 @@ public class ProcessManager {
 
 		@Override
 		public void run() {
-			// TODO Auto-generated method stub
-			// 打印程序输出
 			readProcessOutput(process);
 			
 			// 等待程序执行结束并输出状态

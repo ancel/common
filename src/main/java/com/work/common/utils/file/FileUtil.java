@@ -3,17 +3,19 @@ package com.work.common.utils.file;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import com.work.common.constant.CommonConstant;
+import com.work.common.constant.FileConstant;
 
 /**
  * 文件工具类
@@ -22,8 +24,7 @@ import com.work.common.constant.CommonConstant;
  * 
  */
 public class FileUtil {
-	private List<File> fileList = new ArrayList<File>();
-
+	public static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
 	/**
 	 * 获取文件行数
 	 * 
@@ -43,15 +44,6 @@ public class FileUtil {
 		return lineNumber;
 	}
 
-	public List<File> getFileList() {
-		return fileList;
-	}
-
-	public void setFileList(List<File> fileList) {
-		this.fileList = fileList;
-	}
-
-	
 	/**
 	 * 新建文件
 	 * @param file
@@ -66,59 +58,21 @@ public class FileUtil {
 	
 	
 	/**
-	 * 通过递归得到某一路径下所有的目录及其文件
+	 * 获取root下所有文件
+	 * @param root
+	 * @param fileList
+	 * @param fileFilter
 	 */
-	public void getDirsAndFiles(String filePath) {
-		File root = new File(filePath);
-		File[] files = root.listFiles();
-		for (File file : files) {
-			if (file.isDirectory()) {
-				fileList.add(file);
-				getDirsAndFiles(file.getAbsolutePath());
-				System.out.println("显示" + filePath + "下所有子目录及其文件"
-						+ file.getAbsolutePath());
-			} else {
-				fileList.add(file);
-				System.out.println("显示" + filePath + "下所有子目录"
-						+ file.getAbsolutePath());
-			}
-		}
-	}
-	
-	/**
-	 * 通过递归得到某一路径下所有的文件
-	 */
-	public void getFiles(String filePath) {
-		File root = new File(filePath);
-		File[] files = root.listFiles();
-		for (File file : files) {
-			if (file.isDirectory()) {
-				getFiles(file.getAbsolutePath());
-				System.out.println("显示" + filePath + "下所有子目录及其文件"
-						+ file.getAbsolutePath());
-			} else {
-				fileList.add(file);
-				System.out.println("显示" + filePath + "下所有子目录"
-						+ file.getAbsolutePath());
-			}
-		}
-	}
-	
-	/**
-	 * 通过递归得到某一路径下所有的文件
-	 */
-	public static void getFiles(List<File> fileList,String filePath) {
-		File root = new File(filePath);
-		File[] files = root.listFiles();
-		for (File file : files) {
-			if (file.isDirectory()) {
-				getFiles(fileList,file.getAbsolutePath());
-				System.out.println("显示" + filePath + "下所有子目录及其文件"
-						+ file.getAbsolutePath());
-			} else {
-				fileList.add(file);
-				System.out.println("显示" + filePath + "下所有子目录"
-						+ file.getAbsolutePath());
+	public static void getFiles(File target,List<File> fileList,FileFilter fileFilter){
+		if(null!=target&&target.exists()){
+			if(target.isFile()){
+				if(null==fileFilter||fileFilter.accept(target)){
+					fileList.add(target);
+				}
+			}else{
+				for (File file : target.listFiles()) {
+					getFiles(file, fileList,fileFilter);
+				}
 			}
 		}
 	}
@@ -129,7 +83,6 @@ public class FileUtil {
 	 * @param data
 	 */
 	public static void write(String fileName,String data){
-		//writeByBuffer(fileName,data,CharSet.UTF_8,true);
 		FileRecordHelper.write(fileName, data);
 	}
 	
@@ -145,7 +98,7 @@ public class FileUtil {
 		try {
 			FileUtils.writeStringToFile(file, data,Charset.forName(charset),true);
 			if(flag){
-				FileUtils.writeStringToFile(file, CommonConstant.LINE_SEPARATOR,Charset.forName(charset),true);
+				FileUtils.writeStringToFile(file, FileConstant.LINE_SEPARATOR,Charset.forName(charset),true);
 			}
 			
 		} catch (IOException e) {
@@ -168,7 +121,7 @@ public class FileUtil {
 			out = new BufferedOutputStream(new FileOutputStream(file));
 			out.write(data.getBytes(charset));
 			if(flag){
-				out.write(CommonConstant.LINE_SEPARATOR_BYTES);
+				out.write(FileConstant.LINE_SEPARATOR_BYTES);
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -200,42 +153,32 @@ public class FileUtil {
 		return sb.toString();
 	}
 	
-	/**
-     * 递归删除目录下的所有文件及子目录下所有文件
-     * @param dir 将要删除的文件目录
-     * @return boolean Returns "true" if all deletions were successful.
-     *                 If a deletion fails, the method stops attempting to
-     *                 delete and returns "false".
+	
+    /**
+     * 删除目标文件
+     * @param target
+     * @return
+     * @throws IOException 
      */
-    public static boolean deleteDir(File dir) {
-    	System.out.println("删除文件或文件夹"+dir.getAbsolutePath());
-        if (dir.isDirectory()) {
-            String[] children = dir.list();
-            //递归删除目录中的子目录下
-            for (int i=0; i<children.length; i++) {
-                boolean success = deleteDir(new File(dir, children[i]));
-                if (!success) {
-                    return false;
-                }
-            }
+    public static boolean delete(File target) throws IOException  {
+    	if(null==target){
+    		return true;
+    	}
+    	if(!target.exists()){
+    		return true;
+    	}
+        if (target.isDirectory()) {
+        	for (File file : target.listFiles()) {
+				delete(file);
+			}
         }
-        // 目录此时为空，可以删除
-        return dir.delete();
+        boolean result = target.delete();
+        if(result){
+        	LOGGER.info("已删除---"+target.getPath());
+        }else{
+        	throw new IOException("删除失败---"+target.getPath());
+        }
+        return result;
     }
 	
-	public static void main(String[] args) {
-		FileUtil fu = new FileUtil();
-		fu.getFiles("D:\\data");
-		List<File> fileList = fu.getFileList();
-		for (File file : fileList) {
-			System.out.println(file.getAbsolutePath());
-		}
-		File f = new File("D:\\dat\\马可波罗\\makepolo-45800-20140818.txt");
-		try {
-			createFile(f);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
 }

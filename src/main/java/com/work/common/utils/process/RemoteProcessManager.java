@@ -13,19 +13,12 @@ import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**   
-*    
-* 项目名称：spider-backstage   
-* 类名称：RemoteProcessManager   
-* 类描述：   远程进程管理
-* 创建人：admin   
-* 创建时间：2015年5月28日 下午2:43:11   
-* 修改人：admin   
-* 修改时间：2015年5月28日 下午2:43:11   
-* 修改备注：   
-* @version    
-*    
-*/
+/**
+ * 跨服务器进程管理器
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午3:17:20 
+ * 
+ */  
 public class RemoteProcessManager {
 	public static final Logger LOGGER = LoggerFactory.getLogger(RemoteProcessManager.class);
 	
