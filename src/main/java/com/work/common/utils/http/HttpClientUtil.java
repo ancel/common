@@ -1,27 +1,20 @@
 package com.work.common.utils.http;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
-import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.GzipDecompressingEntity;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.util.CharArrayBuffer;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,27 +33,19 @@ public class HttpClientUtil {
 			.getLogger(HttpClientUtil.class);
 
 	/**
-	 * 
 	 * @param url
 	 * @param charset
-	 *            请求参数编码
 	 * @param params
 	 * @param charset2
-	 *            response编码
 	 * @param httpHost
-	 *            代理
 	 * @param cookieSpecs
-	 *            cookie策略
 	 * @return
-	 * @throws Exception
 	 */
 	public static String getHttpResponseByPost(String url, String charset,
 			List<NameValuePair> params, String charset2, HttpHost httpHost,
 			String cookieSpecs) {
-		// CloseableHttpClient httpclient = HttpClients.createDefault();
 		CloseableHttpClient httpclient = HttpClientManager
 				.getHttpClient(httpHost);
-		// HttpHost httpHost=new HttpHost("proxy.dianhua.cn",8080);
 		RequestConfig config = RequestConfig.custom().setConnectTimeout(30000)
 				.setSocketTimeout(30000).setCookieSpec(cookieSpecs).build();
 		HttpPost httpPost = new HttpPost(url);
@@ -102,17 +87,26 @@ public class HttpClientUtil {
 					try {
 						httpclient.close();
 					} catch (IOException e2) {
-						// TODO Auto-generated catch block
 						LOGGER.error("request-------" + url, e2);
 					}finally{
 						flag = false;
 					}
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				LOGGER.error("request-------" + url, e);
+				//代理挂了继续跑
 				if(e instanceof HttpHostConnectException){
+					LOGGER.error("==============proxy down!!!========");
 					flag = true;
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
 				}else{
+					LOGGER.error("request-------" + url, e);
+					//非正常运行结束（除代理挂了的情况），关闭httpclient
 					try {
 						httpclient.close();
 					} catch (IOException e2) {
@@ -129,18 +123,14 @@ public class HttpClientUtil {
 	}
 
 	/**
-	 * 
 	 * @param url
 	 * @param charset
 	 * @param httpHost
-	 * @param cookieSpecs
-	 *            例如不使用cookie时为CookieSpecs.IGNORE_COOKIES
+	 * @param cookieSpecs 例如不使用cookie时为CookieSpecs.IGNORE_COOKIES
 	 * @return
-	 * @throws Exception
 	 */
 	public static String getHttpResponseByGet(String url, String charset,
 			HttpHost httpHost, String cookieSpecs) {
-		// CloseableHttpClient httpclient = HttpClients.createDefault();
 		CloseableHttpClient httpclient = HttpClientManager
 				.getHttpClient(httpHost);
 		HttpGet httpGet = new HttpGet(url);
@@ -192,7 +182,7 @@ public class HttpClientUtil {
 					}
 				}
 			} catch (Exception e) {
-				
+				LOGGER.error("request-------" + url, e);
 				//代理挂了继续跑
 				if(e instanceof HttpHostConnectException){
 					LOGGER.error("==============proxy down!!!========");
@@ -221,16 +211,6 @@ public class HttpClientUtil {
 
 	}
 
-	/**
-	 * 
-	 * @param url
-	 * @param params
-	 * @param httpHost
-	 * @param charset
-	 * @param charset2
-	 * @return
-	 * @throws Exception
-	 */
 	public static String getHttpResponseByPost(String url,
 			List<NameValuePair> params, HttpHost httpHost, String charset,
 			String charset2) {
@@ -238,131 +218,28 @@ public class HttpClientUtil {
 				CookieSpecs.IGNORE_COOKIES);
 	}
 
-	/**
-	 * 不使用cookie
-	 * 
-	 * @param url
-	 * @param params
-	 * @param charset
-	 *            请求编码
-	 * @param charset2
-	 *            响应编码
-	 * @return
-	 * @throws Exception
-	 */
 	public static String getHttpResponseByPost(String url,
 			List<NameValuePair> params, String charset, String charset2) {
 		return getHttpResponseByPost(url, charset, params, charset2, null,
 				CookieSpecs.IGNORE_COOKIES);
 	}
 
-	/**
-	 * 不使用cookie
-	 * 
-	 * @param url
-	 * @param httpHost
-	 * @return
-	 * @throws Exception
-	 */
 	public static String getHttpResponseByGet(String url, HttpHost httpHost,
 			String charset) {
 		return getHttpResponseByGet(url, charset, httpHost,
 				CookieSpecs.IGNORE_COOKIES);
 	}
 
-	/**
-	 * 不使用cookie
-	 * 
-	 * @param url
-	 * @param charset
-	 *            返回结果编码
-	 * @return
-	 * @throws Exception
-	 */
 	public static String getHttpResponseByGet(String url, String charset) {
 		return getHttpResponseByGet(url, charset, null,
 				CookieSpecs.IGNORE_COOKIES);
 	}
 
-	/**
-	 * cookie
-	 * 
-	 * @param url
-	 * @param charset
-	 *            返回结果编码
-	 * @return
-	 * @throws Exception
-	 */
 	public static String getHttpResponseByGet(String url, String charset,
 			String cookieSpecs) {
 		return getHttpResponseByGet(url, charset, null, cookieSpecs);
 	}
 
-	@SuppressWarnings("unused")
-	private static String printResponse(HttpResponse response) {
-		HttpEntity entity = response.getEntity();
-		StringBuffer sb = new StringBuffer();
-		try {
-			BufferedReader is = new BufferedReader(new InputStreamReader(
-					entity.getContent()));
-			String line = null;
-			while ((line = is.readLine()) != null) {
-				// System.out.println(line);
-				sb.append(line);
-			}
-		} catch (IllegalStateException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return sb.toString();
-	}
-
-	public static String processEntity(HttpEntity entity, String charset) {
-		InputStream is = null;
-		if (entity.getContentEncoding() != null
-				&& entity.getContentEncoding().getValue()
-						.equalsIgnoreCase("gzip")) {
-			GzipDecompressingEntity gde = new GzipDecompressingEntity(entity);
-			try {
-				is = gde.getContent();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		CharArrayBuffer buffer = null;
-		try {
-			if (is == null)
-				is = entity.getContent();
-			int i = (int) entity.getContentLength();
-			if (i < 0) {
-				i = 4096;
-			}
-			Reader reader = new InputStreamReader(is, charset);
-			buffer = new CharArrayBuffer(i);
-			try {
-				char[] tmp = new char[1024];
-				int l;
-				while ((l = reader.read(tmp)) != -1) {
-					buffer.append(tmp, 0, l);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				return buffer.toString();
-			} finally {
-				reader.close();
-				is.close();
-			}
-		} catch (IllegalStateException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return buffer.toString();
-	}
-	
 	
 	/**
 	 * 多次get请求
@@ -412,14 +289,15 @@ public class HttpClientUtil {
 	}
 	
 	/**
-	 * 不使用代理，请求限制20次
+	 * 多次post请求
+	 * 若请求次数小于1，则无限请求
+	 * @param params
 	 * @param url
+	 * @param charset
+	 * @param charset2
+	 * @param visitLimit
 	 * @return
 	 */
-	public static String getResponse(String url){
-		return getResponse(url,null,CharSet.UTF_8,20);
-	}
-	
 	public static String getResponse(List<NameValuePair> params,String url,String charset,String charset2,int visitLimit){
 		String response = null;
 		int visitNum = 1;
@@ -433,9 +311,6 @@ public class HttpClientUtil {
 			}
 		}
 		return response;
-	}
-	public static String getResponse(List<NameValuePair> params,String url){
-		return getResponse(params,url,CharSet.UTF_8, CharSet.UTF_8,20);
 	}
 
 }

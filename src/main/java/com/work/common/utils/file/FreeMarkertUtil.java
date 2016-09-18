@@ -14,6 +14,12 @@ import freemarker.template.DefaultObjectWrapper;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
+/**
+ * freemaker模板工具
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午3:00:46 
+ * 
+ */  
 public class FreeMarkertUtil {
 	/**
 	 * 
@@ -79,8 +85,4 @@ public class FreeMarkertUtil {
 		analysisTemplate(templateDir,templateName,outFileName,CharSet.UTF_8,CharSet.UTF_8, data); 
 	}
 	
-	
-	public static void main(String[] args) {
-		
-	}
 }

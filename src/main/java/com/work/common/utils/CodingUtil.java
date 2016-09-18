@@ -97,6 +97,11 @@ public class CodingUtil {
 	}
 	
 
+	/**
+	 * 删除乱码
+	 * @param str
+	 * @return
+	 */
 	public static String deleteMessyCode(String str){
 		int sLength = str.length();
 		StringBuffer sb = new StringBuffer();

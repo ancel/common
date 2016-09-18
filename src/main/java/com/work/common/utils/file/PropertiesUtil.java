@@ -4,11 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-/**
- * 功能描述：处理Properties的常用方法 <br>
- * 
- */
-public abstract class PropertiesUtil {
+public class PropertiesUtil {
 
 	/**
 	 * 转换Properties为Map对象

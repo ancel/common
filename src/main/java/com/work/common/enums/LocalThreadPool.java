@@ -5,13 +5,15 @@ import java.util.concurrent.Executors;
 
 /**
  * 线程池工具类
- * @author admin
- *
- */
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午2:46:45 
+ * 
+ */  
 public enum LocalThreadPool {
 	
 	CACHED,FIXED,SCHEDULED,SINGLE;
 	
+	//线程池大小
 	private int nThreads = 30;
 	public synchronized ExecutorService getThreadPool(){
 		switch (this) {

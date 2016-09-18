@@ -5,7 +5,7 @@ import java.io.Serializable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.work.common.utils.EncryptionUtil;
+import com.work.common.utils.encryption.EncryptionUtil;
 
 
 public class CrawlUrl implements Serializable{

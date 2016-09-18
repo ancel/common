@@ -12,6 +12,12 @@ import org.apache.commons.dbutils.handlers.ScalarHandler;
 
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
+/**
+ * c3p0数据源管理
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午2:52:55 
+ * 
+ */  
 public enum DataSourceManager {
 	INSTANCE;
 	private Map<String, DataSource> dataSourceMap;

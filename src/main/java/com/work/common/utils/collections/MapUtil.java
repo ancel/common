@@ -12,6 +12,12 @@ import java.util.Map.Entry;
 
 import com.google.common.collect.TreeMultimap;
 
+/**
+ * 
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午2:48:55 
+ * 
+ */  
 public class MapUtil {
 	/**
 	 * map排序

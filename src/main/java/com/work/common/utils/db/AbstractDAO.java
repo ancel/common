@@ -16,9 +16,9 @@ import com.work.common.utils.LRUCache;
 
 public abstract class AbstractDAO {
 	LRUCache<String, DataSource> sourceCache = new LRUCache<>(5);
-	static {
-		System.setProperty("com.mchange.v2.c3p0.cfg.xml","conf/c3p0-config.xml");
-	}
+//	static {
+//		System.setProperty("com.mchange.v2.c3p0.cfg.xml","conf/c3p0-config.xml");
+//	}
 	protected QueryRunner runner = new QueryRunner(getDataSource());
 
 	private DataSource getDataSource() {

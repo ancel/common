@@ -15,7 +15,7 @@ public class Base64Util {
 
 	/**
 	 * 
-	 * @param fileName 编码文件
+	 * @param fileName
 	 * @return
 	 */
 	public static String base64Encoder(String fileName) {

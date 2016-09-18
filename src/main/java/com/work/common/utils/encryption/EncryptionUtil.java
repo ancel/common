@@ -1,4 +1,4 @@
-package com.work.common.utils;
+package com.work.common.utils.encryption;
 
 import java.io.UnsupportedEncodingException;
 import java.security.Key;
@@ -16,19 +16,13 @@ import org.slf4j.LoggerFactory;
 import sun.misc.BASE64Decoder;
 import sun.misc.BASE64Encoder;
 
+
 /**
- * 
- * 创建人：wanghaibo <br>
- * 创建时间：2015-3-5 上午10:13:52 <br>
- * 功能描述： 提供各种加密功能 <br>
- * 版本： <br>
- * ====================================== <br>
- * 修改记录 <br>
- * ====================================== <br>
- * 序号 姓名 日期 版本 简单描述 <br>
+ * 加密解密
+ * @author：wanghaibo 
+ * @creattime：2016年9月18日 下午2:53:48 
  * 
  */  
-
 @SuppressWarnings("restriction")
 public class EncryptionUtil {
 
