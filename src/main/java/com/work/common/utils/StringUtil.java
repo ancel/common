@@ -344,7 +344,7 @@ public abstract class StringUtil {
 		chars[0] = CharUtils.toString(chars[0]).toUpperCase().charAt(0);
 		for (int i = 1; i < chars.length; i++) {
 			// 前一个字符不是字母时转大写，否则转小写
-			if (Regex.check( CharUtils.toString(chars[i - 1]),Regex.REG_LETTER)) {
+			if (Regex.check(Regex.REG_LETTER, CharUtils.toString(chars[i - 1]))) {
 				chars[i] = CharUtils.toString(chars[i]).toLowerCase().charAt(0);
 			} else {
 				chars[i] = CharUtils.toString(chars[i]).toUpperCase().charAt(0);
@@ -364,7 +364,7 @@ public abstract class StringUtil {
 		chars[0] = CharUtils.toString(chars[0]).toUpperCase().charAt(0);
 		for (int i = 1; i < chars.length; i++) {
 			// 前一个字符不是字母时转大写，否则转小写
-			if (Regex.check( CharUtils.toString(chars[i - 1]),Regex.REG_LETTER)) {
+			if (Regex.check(Regex.REG_LETTER, CharUtils.toString(chars[i - 1]))) {
 				chars[i] = CharUtils.toString(chars[i]).toUpperCase().charAt(0);
 			} else {
 				chars[i] = CharUtils.toString(chars[i]).toLowerCase().charAt(0);

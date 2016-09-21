@@ -56,7 +56,7 @@ public class PdfUtil {
 		String content = PdfUtil.getTextFromPDF(pdfFilePath);
 		String[] locationStr = content.split("\\r\\n");
 		for (String string : locationStr) {
-			if(Regex.check(Regex.REG_NUMBER, string.substring(0, 1))){
+			if(Regex.check(string.substring(0, 1),Regex.REG_NUMBER)){
 				System.out.println(string);
 				String[] strs = string.split(" ");
 				for (String string2 : strs) {
