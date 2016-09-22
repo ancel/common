@@ -1,10 +1,14 @@
 package com.work.common.utils.file;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.work.common.constant.CharSet;
 import com.work.common.constant.FileConstant;
@@ -18,6 +22,7 @@ import com.work.common.constant.FileConstant;
  * 
  */  
 public class FileRecordHelper {
+	private static final Logger LOGGER = LoggerFactory.getLogger(FileRecordHelper.class);
 	public static Map<String, List<String>> map = new HashMap<>();
 	public static int flushNum = 50;
 	
@@ -25,6 +30,7 @@ public class FileRecordHelper {
 	 * 写数据，若是数据量满足flushNum则刷入文件
 	 * @param errorFileName
 	 * @param line
+	 * @throws IOException 
 	 */
 	public synchronized static void write(String fileName,String line){
 		List<String> record = map.get(fileName);
@@ -40,7 +46,12 @@ public class FileRecordHelper {
 				for (String string : record) {
 						sb.append(string).append(FileConstant.LINE_SEPARATOR);
 				}
-				FileUtil.write(fileName, sb.toString(), CharSet.UTF_8, false);
+				try {
+					FileUtil.write(fileName, sb.toString(), CharSet.UTF_8, false);
+				} catch (IOException e) {
+					LOGGER.error("文件写入失败:"+fileName,e);
+					System.exit(1);
+				}
 				record.clear();
 			}
 			
@@ -50,6 +61,7 @@ public class FileRecordHelper {
 	
 	/**
 	 * 清空缓存数据
+	 * @throws IOException 
 	 */
 	public synchronized static void flush(){
 		Set<String> keys = map.keySet();
@@ -59,7 +71,12 @@ public class FileRecordHelper {
 			for (String string : record) {
 				sb.append(string).append(FileConstant.LINE_SEPARATOR);
 			}
-			FileUtil.write(key, sb.toString(), CharSet.UTF_8, false);
+			try {
+				FileUtil.write(key, sb.toString(), CharSet.UTF_8, false);
+			} catch (IOException e) {
+				LOGGER.error("文件写入失败:"+key,e);
+				System.exit(1);
+			}
 			record.clear();
 			map.put(key, record);
 		}

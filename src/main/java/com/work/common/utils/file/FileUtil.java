@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.LineNumberReader;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.List;
 
@@ -78,32 +79,18 @@ public class FileUtil {
 	}
 	
 	/**
-	 * 记录数据
-	 * @param fileName
-	 * @param data
-	 */
-	public static void write(String fileName,String data){
-		FileRecordHelper.write(fileName, data);
-	}
-	
-	/**
 	 * 记录数据 ,通过FileOutputStream
 	 * @param fileName
 	 * @param data
 	 * @param charset
 	 * @param flag true表示换行，否则不换行
+	 * @throws IOException 
 	 */
-	public static void write(String fileName,String data,String charset,boolean flag){
+	public static void write(String fileName,String data,String charset,boolean flag) throws IOException{
 		File file = new File(fileName);
-		try {
-			FileUtils.writeStringToFile(file, data,Charset.forName(charset),true);
-			if(flag){
-				FileUtils.writeStringToFile(file, FileConstant.LINE_SEPARATOR,Charset.forName(charset),true);
-			}
-			
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		FileUtils.writeStringToFile(file, data,Charset.forName(charset),true);
+		if(flag){
+			FileUtils.writeStringToFile(file, FileConstant.LINE_SEPARATOR,Charset.forName(charset),true);
 		}
 	}
 	
@@ -113,43 +100,36 @@ public class FileUtil {
 	 * @param data
 	 * @param charset
 	 * @param flag true表示换行，否则不换行
+	 * @throws IOException 
+	 * @throws UnsupportedEncodingException 
 	 */
-	public static void writeByBuffer(String fileName,String data,String charset,boolean flag){
+	public static void writeByBuffer(String fileName,String data,String charset,boolean flag) throws UnsupportedEncodingException, IOException{
 		File file = new File(fileName);
 		BufferedOutputStream out = null;
-		try {
-			out = new BufferedOutputStream(new FileOutputStream(file));
-			out.write(data.getBytes(charset));
-			if(flag){
-				out.write(FileConstant.LINE_SEPARATOR_BYTES);
-			}
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}finally{
-			try {
-				out.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+		out = new BufferedOutputStream(new FileOutputStream(file));
+		out.write(data.getBytes(charset));
+		if(flag){
+			out.write(FileConstant.LINE_SEPARATOR_BYTES);
 		}
+		out.close();
 	}
 	
-	public static String readFile(String fileName){
+	
+	/**
+	 * 获取文件内容
+	 * @param fileName
+	 * @return
+	 * @throws IOException
+	 */
+	public static String readFile(String fileName) throws IOException{
 		BufferedReader br;
 		StringBuffer sb = new StringBuffer();
 		String line;
-		try {
-			br = new BufferedReader(new FileReader(fileName));
-			while((line=br.readLine())!=null){
-				sb.append(line);
-			}
-			br.close();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		br = new BufferedReader(new FileReader(fileName));
+		while((line=br.readLine())!=null){
+			sb.append(line);
 		}
+		br.close();
 		return sb.toString();
 	}
 	
@@ -160,25 +140,20 @@ public class FileUtil {
      * @return
      * @throws IOException 
      */
-    public static boolean delete(File target) throws IOException  {
+    public static void delete(File target) throws IOException  {
     	if(null==target){
-    		return true;
+    		return;
     	}
     	if(!target.exists()){
-    		return true;
+    		return;
     	}
         if (target.isDirectory()) {
         	for (File file : target.listFiles()) {
 				delete(file);
 			}
         }
-        boolean result = target.delete();
-        if(result){
-        	LOGGER.info("已删除---"+target.getPath());
-        }else{
-        	throw new IOException("删除失败---"+target.getPath());
-        }
-        return result;
+    	target.delete();
+        LOGGER.info("已删除---"+target.getPath());
     }
 	
 }

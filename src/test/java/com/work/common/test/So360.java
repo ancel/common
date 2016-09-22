@@ -4,6 +4,9 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
@@ -11,13 +14,15 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
+import com.sleepycat.je.rep.impl.TextProtocol.Message;
 import com.work.common.utils.Regex;
 import com.work.common.utils.http.HttpsClientUtil;
 
 public class So360 {
 	public static void main(String[] args) {
-		String keyStorePath = "C:\\Users\\Li Yujie\\Desktop\\so.keystore";
+		String keyStorePath = "file/so.keystore";
 		String keyStorePassword = "111111";
+		String urlTemplate = "https://www.so.com/s?q={0}&src=srp&fr=hao_360so";
 		SSLConnectionSocketFactory sslsf = null;
 		try {
 			sslsf = HttpsClientUtil.getSSLConnectionSocketFactory(keyStorePath, keyStorePassword);
@@ -27,8 +32,8 @@ public class So360 {
 		}
 		CloseableHttpClient httpclient = HttpClients.custom()
 				.setSSLSocketFactory(sslsf).build();
-		String urlPath = "C:\\Users\\Li Yujie\\Desktop\\360.txt";
-		String outPath = "C:\\Users\\Li Yujie\\Desktop\\360_so.txt";
+		String urlPath = "C:\\Users\\Li Yujie\\Desktop\\360_num_2.txt";
+		String outPath = "C:\\Users\\Li Yujie\\Desktop\\360_result_2.txt";
 		BufferedReader br;
 		BufferedWriter bw;
 		try {
@@ -36,21 +41,21 @@ public class So360 {
 			bw = new BufferedWriter(new FileWriter(outPath));
 			String line;
 			String content = null;
-			String name;
 			int i=0;
 			HttpHost host = new HttpHost("172.18.19.254", 8080);
+			List<String> typeList = new ArrayList<String>(2);
 			while((line=br.readLine())!=null){
 				if(StringUtils.isNotBlank(line)){
 					while(true){
 						System.out.println((++i)+"\t"+line);
 						try {
-							content = HttpsClientUtil.getResponseByGet(httpclient,host, line.trim());
+							content = HttpsClientUtil.getResponseByGet(httpclient,host, MessageFormat.format(urlTemplate, line.trim()));
 						} catch (Exception e) {
 							e.printStackTrace();
 							continue;
 						}
 						if(null==content||(StringUtils.isNotBlank(content)&&content.contains("系统检测到您操作过于频繁"))){
-							System.out.println(content);
+							System.out.println("封锁");
 							httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
 							Thread.sleep(5000);
 						}
@@ -59,19 +64,22 @@ public class So360 {
 						}
 					}
 					
-					System.out.println("start regex");
-					name = "";
 					if(StringUtils.isNotBlank(content)){
-						name = Regex.regexReadOne(content, "来自<strong class=\"mohe-tips\">“\\s*?<img\\s*?src=\"([\\S]*?)\" class=\"mh-hy-img\"/>"); 
-						if(StringUtils.isBlank(name)){
-							name = Regex.regexReadOne(content, "<strong class=\"mohe-tips mh-hy\">\\s*?<img\\s*?src=\"([\\S]*?)\"");
+						if(StringUtils.isNotBlank(Regex.regexReadOne(content, "target=\"_blank\" data-md='\\{\"p\":\"more\"\\}'>([\\s\\S]*?)</a>"))
+								||StringUtils.isNotBlank(Regex.regexReadOne(content, "来自<strong class=\"mohe-tips\">“\\s*?<img\\s*?src=\"([\\S]*?)\" class=\"mh-hy-img\"/>"))
+								||StringUtils.isNotBlank(Regex.regexReadOne(content, "<strong class=\"mohe-tips mh-hy\">\\s*?<img\\s*?src=\"([\\S]*?)\""))){
+							typeList.add("商户");
 						}
+						if(StringUtils.isNotBlank(Regex.regexReadOne(content, "<span\\s*?class=\"mohe-ph-mark\"\\s*?style=\"background-color:#e76639\">([\\s\\S]*?)</span>"))){
+							typeList.add("标记");
+						}
+						
 					}
-					if(StringUtils.isBlank(name)){
+					if(typeList.size()==0){
 						continue;
 					}
-//					System.out.println(line+"\t"+name);
-					bw.write(line+"\t"+name);
+					bw.write(line+"\t"+StringUtils.join(typeList,"+"));
+					typeList.clear();
 					bw.newLine();
 					bw.flush();
 				}
