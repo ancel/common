@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
@@ -20,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.work.common.constant.CharSet;
+import com.work.common.utils.Regex;
 
 /**
  * http请求工具类
@@ -158,10 +160,13 @@ public class HttpClientUtil {
 				int status = response.getStatusLine().getStatusCode();
 				if (status >= 200 && status < 300) {
 					entity = response.getEntity();
-					if (StringUtils.isBlank(charset)) {
+					if(StringUtils.isBlank(charset)){
+						charset = getCharSet(response);
+					}
+					if (StringUtils.isNotBlank(charset)) {
+						responseStr = EntityUtils.toString(entity, charset);
+					}else{
 						responseStr = EntityUtils.toString(entity);
-					} else {
-						 responseStr = EntityUtils.toString(entity, charset);
 					}
 				} else {
 					LOGGER.error(url+"----"+status);
@@ -209,6 +214,30 @@ public class HttpClientUtil {
 		}
 		return responseStr;
 
+	}
+	
+	public static String getCharSet(HttpResponse response){
+		HttpEntity entity = response.getEntity();
+		String charset = null;
+		if (entity.getContentEncoding() != null){
+			String contentType= entity.getContentEncoding().getValue();
+			if(StringUtils.isNotBlank(contentType)){
+				charset = Regex.regexReadOne(contentType, "charset=([\\s\\S]*)", 1);
+				if(StringUtils.isNotBlank(charset)){
+					return charset;
+				}
+			}
+		}
+		String responseStr;
+		try {
+			responseStr = EntityUtils.toString(entity);
+			if(StringUtils.isNotBlank(responseStr)){
+				charset = Regex.regexReadOne(responseStr, "charset=[\"|']?([\\s\\S]*?)[\"|']", 1);
+			}
+		} catch (Exception e) {
+			charset = null;
+		} 
+		return charset;
 	}
 
 	public static String getHttpResponseByPost(String url,
