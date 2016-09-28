@@ -14,7 +14,6 @@ import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import com.sleepycat.je.rep.impl.TextProtocol.Message;
 import com.work.common.utils.Regex;
 import com.work.common.utils.http.HttpsClientUtil;
 
@@ -49,7 +48,7 @@ public class So360 {
 					while(true){
 						System.out.println((++i)+"\t"+line);
 						try {
-							content = HttpsClientUtil.getResponseByGet(httpclient,host, MessageFormat.format(urlTemplate, line.trim()));
+							content = HttpsClientUtil.getResponseByGet(httpclient,host, MessageFormat.format(urlTemplate, line.replaceAll("\\s+", "")));
 						} catch (Exception e) {
 							e.printStackTrace();
 							continue;

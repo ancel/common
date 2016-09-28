@@ -42,12 +42,6 @@ import org.apache.http.io.HttpMessageWriterFactory;
 import com.work.common.constant.CharSet;
 
 public class HttpClientManager {
-	private static ConnectionConfig connectionConfig;
-	private static HttpConnectionFactory<HttpRoute, ManagedHttpClientConnection> connFactory;
-	private static Registry<ConnectionSocketFactory> socketFactoryRegistry;
-	private static DnsResolver dnsResolver;
-	private static  SocketConfig socketConfig;
-	private static RequestConfig defaultRequestConfig;
 	/**
 	 * 最大连接数
 	 */
@@ -57,30 +51,25 @@ public class HttpClientManager {
 	 */
 	public final static int MAX_PER_ROUTE = 100;
 	
+	public static RequestConfig defaultRequestConfig;
+	public static Registry<ConnectionSocketFactory> socketFactoryRegistry;
+	public static HttpConnectionFactory<HttpRoute, ManagedHttpClientConnection> connFactory;
+	public static DnsResolver dnsResolver;
+	public static SocketConfig socketConfig;
+	public static ConnectionConfig connectionConfig;
+
 	static {
 		HttpMessageWriterFactory<HttpRequest> requestWriterFactory = new DefaultHttpRequestWriterFactory();
-        
-		// Use a custom connection factory to customize the process of
-        // initialization of outgoing HTTP connections. Beside standard connection
-        // configuration parameters HTTP connection factory can define message
-        // parser / writer routines to be employed by individual connections.
-        connFactory = new ManagedHttpClientConnectionFactory(
+		connFactory = new ManagedHttpClientConnectionFactory(
                 requestWriterFactory, new DefaultHttpResponseParserFactory());
 		
-		// SSL context for secure connections can be created either based on
-        // system or application specific properties.
         SSLContext sslcontext = SSLContexts.createSystemDefault();
-        // Use custom hostname verifier to customize SSL hostname verification.
         X509HostnameVerifier hostnameVerifier = new BrowserCompatHostnameVerifier();
-
-		// Create a registry of custom connection socket factories for supported
-        // protocol schemes.
         socketFactoryRegistry = RegistryBuilder.<ConnectionSocketFactory>create()
             .register("http", PlainConnectionSocketFactory.INSTANCE)
             .register("https", new SSLConnectionSocketFactory(sslcontext, hostnameVerifier))
             .build();
 
-        // Use custom DNS resolver to override the system DNS resolution.
         dnsResolver = new SystemDefaultDnsResolver() {
             @Override
             public InetAddress[] resolve(final String host) throws UnknownHostException {
@@ -92,64 +81,47 @@ public class HttpClientManager {
             }
 
         };
-		// Create socket configuration
+        
         socketConfig = SocketConfig.custom()
             .setTcpNoDelay(true)
             .build();
-		// Create message constraints
+        
         MessageConstraints messageConstraints = MessageConstraints.custom()
-//            .setMaxHeaderCount(2000)
-//            .setMaxLineLength(20000)
             .build();
-		// Create connection configuration
         connectionConfig = ConnectionConfig.custom()
             .setMalformedInputAction(CodingErrorAction.IGNORE)
             .setUnmappableInputAction(CodingErrorAction.IGNORE)
             .setCharset(Consts.UTF_8)
             .setMessageConstraints(messageConstraints)
             .build();
-        // Create global request configuration
+        
         defaultRequestConfig = RequestConfig.custom()
             .setCookieSpec(CookieSpecs.BEST_MATCH)
             .setExpectContinueEnabled(true)
             .setStaleConnectionCheckEnabled(true)
             .setTargetPreferredAuthSchemes(Arrays.asList(AuthSchemes.NTLM, AuthSchemes.DIGEST))
             .setProxyPreferredAuthSchemes(Arrays.asList(AuthSchemes.BASIC))
+            .setConnectTimeout(30000)
+			.setSocketTimeout(30000)
             .build();
-        
 	}
-	
-	public static PoolingHttpClientConnectionManager getConnectionManager(){
-		PoolingHttpClientConnectionManager connManager;
-        
-		// Create a connection manager with custom configuration.
-        connManager = new PoolingHttpClientConnectionManager(
-                socketFactoryRegistry, connFactory, dnsResolver);
-        
-        // Configure the connection manager to use socket configuration either
-        // by default or for a specific host.
-        connManager.setDefaultSocketConfig(socketConfig);
-//        connManager.setSocketConfig(new HttpHost("somehost", 80), socketConfig);
-        
-        // Configure the connection manager to use connection configuration either
-        // by default or for a specific host.
-        connManager.setDefaultConnectionConfig(connectionConfig);
-//        connManager.setConnectionConfig(new HttpHost("somehost", 80), ConnectionConfig.DEFAULT);
 
-        // Configure total max or per route limits for persistent connections
-        // that can be kept in the pool or leased by the connection manager.
+	public static PoolingHttpClientConnectionManager getConnManager(){
+		PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(
+                socketFactoryRegistry, connFactory, dnsResolver);
+        connManager.setDefaultSocketConfig(socketConfig);
+        connManager.setDefaultConnectionConfig(connectionConfig);
         connManager.setMaxTotal(MAX_TOTAL_CONNECTIONS);
         connManager.setDefaultMaxPerRoute(MAX_PER_ROUTE);
         return connManager;
 	}
 	
-	public static CloseableHttpClient getHttpClient(HttpHost httpHost) {
-		// Create an HttpClient with the given custom dependencies and configuration.
+	
+	public static CloseableHttpClient getHttpClient() {
 		CloseableHttpClient httpclient = HttpClients.custom()
-				.setConnectionManager(getConnectionManager())
+				.setConnectionManager(getConnManager())
 				.setDefaultCookieStore(new BasicCookieStore())
 				.setDefaultCredentialsProvider(new BasicCredentialsProvider())
-				.setProxy(httpHost)
 				.setDefaultRequestConfig(defaultRequestConfig)
 				.build();
 		return httpclient;

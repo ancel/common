@@ -1,9 +1,11 @@
 package com.work.common.utils.http;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -16,60 +18,61 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.work.common.constant.CharSet;
 import com.work.common.utils.Regex;
 
 /**
  * http请求工具类
+ * @author：wanghaibo 
+ * @creattime：2016年9月28日 上午11:41:01 
  * 
- * @author admin
- * 
- */
+ */  
 public class HttpClientUtil {
 
 	public static final Logger LOGGER = LoggerFactory
 			.getLogger(HttpClientUtil.class);
 
-	/**
-	 * @param url
-	 * @param charset
-	 * @param params
-	 * @param charset2
-	 * @param httpHost
-	 * @param cookieSpecs
-	 * @return
-	 */
+	public static Header[] defaultHeaders;
+	public static CloseableHttpClient httpclient;
+	static{
+		List<Header> headerList = new ArrayList<Header>();
+		headerList.add(new BasicHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
+		headerList.add(new BasicHeader("Accept-Encoding", "gzip,deflate,sdch"));
+		headerList.add(new BasicHeader("Accept-Language", "zh-CN,zh;q=0.8,en;q=0.6"));
+//		headerList.add(new BasicHeader("Connection", "keep-alive"));
+		headerList.add(new BasicHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"));
+		defaultHeaders = (Header[]) headerList.toArray();
+		httpclient = HttpClientManager.getHttpClient();
+	}
+	
+	
 	public static String getHttpResponseByPost(String url, String charset,
 			List<NameValuePair> params, String charset2, HttpHost httpHost,
 			String cookieSpecs) {
-		CloseableHttpClient httpclient = HttpClientManager
-				.getHttpClient(httpHost);
-		RequestConfig config = RequestConfig.custom().setConnectTimeout(30000)
-				.setSocketTimeout(30000).setCookieSpec(cookieSpecs).build();
+		return getHttpResponseByPost(httpclient, url, charset, params, charset2, httpHost, cookieSpecs);
+	}
+	
+	public static String getHttpResponseByPost(CloseableHttpClient httpclient,String url, String charset,
+			List<NameValuePair> params, String charset2, HttpHost httpHost,
+			String cookieSpecs) {
+		RequestConfig config = RequestConfig.custom().setCookieSpec(cookieSpecs).setProxy(httpHost).build();
 		HttpPost httpPost = new HttpPost(url);
 		httpPost.setConfig(config);
-		httpPost.setHeader("Accept",
-				"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-		httpPost.setHeader("Accept-Encoding", "gzip,deflate,sdch");
-		httpPost.setHeader("Accept-Language", "zh-CN,zh;q=0.8,en;q=0.6");
-		httpPost.setHeader("Connection", "keep-alive");
-		httpPost.setHeader(
-				"User-Agent",
-				"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36");
+		httpPost.setHeaders(defaultHeaders);
 		CloseableHttpResponse response = null;
 		String reponseStr = null;
 		boolean flag = true;
 		while (flag) {
 			try {
 				httpPost.setEntity(new UrlEncodedFormEntity(params, charset));
-
+				
 				// 开始请求
 				response = httpclient.execute(httpPost);
-
+				
 				int status = response.getStatusLine().getStatusCode();
 				if (status >= 200 && status < 300) {
 					if (StringUtils.isBlank(charset2)) {
@@ -81,7 +84,7 @@ public class HttpClientUtil {
 				} else {
 					LOGGER.error(url + "----" + status);
 				}
-
+				
 				try {
 					httpPost.abort();
 				} finally {
@@ -103,7 +106,6 @@ public class HttpClientUtil {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 				}else{
@@ -112,7 +114,6 @@ public class HttpClientUtil {
 					try {
 						httpclient.close();
 					} catch (IOException e2) {
-						// TODO Auto-generated catch block
 						LOGGER.error("request-------" + url, e2);
 					}finally{
 						flag = false;
@@ -124,30 +125,17 @@ public class HttpClientUtil {
 		return reponseStr;
 	}
 
-	/**
-	 * @param url
-	 * @param charset
-	 * @param httpHost
-	 * @param cookieSpecs 例如不使用cookie时为CookieSpecs.IGNORE_COOKIES
-	 * @return
-	 */
 	public static String getHttpResponseByGet(String url, String charset,
 			HttpHost httpHost, String cookieSpecs) {
-		CloseableHttpClient httpclient = HttpClientManager
-				.getHttpClient(httpHost);
+		return getHttpResponseByGet(httpclient, url, charset, httpHost, cookieSpecs);
+
+	}
+	public static String getHttpResponseByGet(CloseableHttpClient httpclient,String url, String charset,
+			HttpHost httpHost, String cookieSpecs) {
 		HttpGet httpGet = new HttpGet(url);
-		// cookie策略
-		RequestConfig config = RequestConfig.custom().setConnectTimeout(30000)
-				.setSocketTimeout(30000).setCookieSpec(cookieSpecs).setCircularRedirectsAllowed(true).build();
+		RequestConfig config = RequestConfig.custom().setCookieSpec(cookieSpecs).setCircularRedirectsAllowed(true).build();
 		httpGet.setConfig(config);
-		httpGet.setHeader("Accept",
-				"text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8");
-		httpGet.setHeader("Accept-Encoding", "gzip,deflate,sdch");
-		httpGet.setHeader("Accept-Language", "zh-CN,zh;q=0.8,en;q=0.6");
-		httpGet.setHeader("Connection", "keep-alive");
-		httpGet.setHeader(
-				"User-Agent",
-				"Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36");
+		httpGet.setHeaders(defaultHeaders);
 		CloseableHttpResponse response = null;
 		HttpEntity entity;
 		String responseStr = null;
@@ -156,7 +144,7 @@ public class HttpClientUtil {
 			try {
 				// 开始请求
 				response = httpclient.execute(httpGet);
-
+				
 				int status = response.getStatusLine().getStatusCode();
 				if (status >= 200 && status < 300) {
 					entity = response.getEntity();
@@ -171,7 +159,7 @@ public class HttpClientUtil {
 				} else {
 					LOGGER.error(url+"----"+status);
 				}
-
+				
 				//正常运行结束，关闭httpclient
 				try {
 					httpGet.abort();
@@ -180,7 +168,6 @@ public class HttpClientUtil {
 					try {
 						httpclient.close();
 					} catch (IOException e2) {
-						// TODO Auto-generated catch block
 						LOGGER.error("request-------" + url, e2);
 					}finally{
 						flag = false;
@@ -195,7 +182,6 @@ public class HttpClientUtil {
 					try {
 						Thread.sleep(1000);
 					} catch (InterruptedException e1) {
-						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
 				}else{
@@ -204,7 +190,6 @@ public class HttpClientUtil {
 					try {
 						httpclient.close();
 					} catch (IOException e2) {
-						// TODO Auto-generated catch block
 						LOGGER.error("request-------" + url, e2);
 					}finally{
 						flag = false;
@@ -213,7 +198,7 @@ public class HttpClientUtil {
 			}
 		}
 		return responseStr;
-
+		
 	}
 	
 	public static String getCharSet(HttpResponse response){
@@ -280,7 +265,6 @@ public class HttpClientUtil {
 	 * @return
 	 */
 	public static String getResponse(String url,HttpHost httpHost,String charSet,int visitLimit){
-		int visitNum = 0;
 		String response = null;
 		//无限循环
 		if(visitLimit<1){
@@ -293,12 +277,10 @@ public class HttpClientUtil {
 				
 				if(StringUtils.isNotBlank(response)){
 					break;
-				}else{
-					visitNum++;
-					System.out.println(url+"---"+visitNum);
 				}
 			}
 		}else{
+			int visitNum = 0;
 			while(visitNum<visitLimit){
 				if(httpHost!=null){
 					response = HttpClientUtil.getHttpResponseByGet(url, httpHost,charSet);
@@ -310,7 +292,6 @@ public class HttpClientUtil {
 					break;
 				}else{
 					visitNum++;
-					System.out.println(url+"---"+visitNum);
 				}
 			}
 		}
@@ -329,16 +310,25 @@ public class HttpClientUtil {
 	 */
 	public static String getResponse(List<NameValuePair> params,String url,String charset,String charset2,int visitLimit){
 		String response = null;
-		int visitNum = 1;
-		while(visitNum<visitLimit){
-			response = HttpClientUtil.getHttpResponseByPost(url, params, CharSet.UTF_8, CharSet.UTF_8);
-			if(StringUtils.isNotBlank(response)){
-				break;
-			}else{
-				System.out.println(url+"----"+visitNum);
-				visitNum++;
+		if(visitLimit<1){
+			while(true){
+				response = HttpClientUtil.getHttpResponseByPost(url, params, charset, charset2);
+				if(StringUtils.isNotBlank(response)){
+					break;
+				}
+			}
+		}else{
+			int visitNum = 1;
+			while(visitNum<visitLimit){
+				response = HttpClientUtil.getHttpResponseByPost(url, params, charset, charset2);
+				if(StringUtils.isNotBlank(response)){
+					break;
+				}else{
+					visitNum++;
+				}
 			}
 		}
+		
 		return response;
 	}
 
