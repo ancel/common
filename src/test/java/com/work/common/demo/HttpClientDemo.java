@@ -102,7 +102,7 @@ public class HttpClientDemo {
 			String cookieSpecs) {
 		// CloseableHttpClient httpclient = HttpClients.createDefault();
 		CloseableHttpClient httpclient = HttpClientManager
-				.getHttpClient(httpHost);
+				.getHttpClient();
 		// HttpHost httpHost=new HttpHost("proxy.dianhua.cn",8080);
 		RequestConfig config = RequestConfig.custom().setConnectTimeout(30000)
 				.setSocketTimeout(30000).setCookieSpec(cookieSpecs).build();

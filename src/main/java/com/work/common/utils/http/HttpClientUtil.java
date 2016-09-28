@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -36,16 +35,16 @@ public class HttpClientUtil {
 	public static final Logger LOGGER = LoggerFactory
 			.getLogger(HttpClientUtil.class);
 
-	public static Header[] defaultHeaders;
+	public static BasicHeader[] defaultHeaders;
 	public static CloseableHttpClient httpclient;
 	static{
-		List<Header> headerList = new ArrayList<Header>();
+		List<BasicHeader> headerList = new ArrayList<BasicHeader>();
 		headerList.add(new BasicHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
 		headerList.add(new BasicHeader("Accept-Encoding", "gzip,deflate,sdch"));
 		headerList.add(new BasicHeader("Accept-Language", "zh-CN,zh;q=0.8,en;q=0.6"));
 //		headerList.add(new BasicHeader("Connection", "keep-alive"));
 		headerList.add(new BasicHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"));
-		defaultHeaders = (Header[]) headerList.toArray();
+		defaultHeaders = headerList.toArray(new BasicHeader[headerList.size()]);
 		httpclient = HttpClientManager.getHttpClient();
 	}
 	
