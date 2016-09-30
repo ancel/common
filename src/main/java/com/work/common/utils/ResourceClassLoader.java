@@ -2,9 +2,14 @@ package com.work.common.utils;
 
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.work.common.utils.file.FileUtil;
 
 /**
  * 自定义类加载器，加载程序以外的类
@@ -46,25 +51,17 @@ public class ResourceClassLoader extends URLClassLoader {
 	 *            文件or文件夹
 	 * @param filenameFilter
 	 * @throws MalformedURLException
+	 * @throws FileNotFoundException 
 	 */
 	public void addURL(String filename, FileFilter fileFilter)
-			throws MalformedURLException {
+			throws MalformedURLException, FileNotFoundException {
 		File targetFile = new File(filename);
 		if (!targetFile.exists()) {
-			System.out.println(filename + " is not exist");
-			return;
+			throw new FileNotFoundException(filename);
 		}
-		File[] jarFiles;
-		if (targetFile.isDirectory()) {
-			jarFiles = targetFile.listFiles(fileFilter);
-		} else {
-			if (fileFilter.accept(targetFile)) {
-				jarFiles = new File[] { targetFile };
-			} else {
-				return;
-			}
-		}
-		for (File file : jarFiles) {
+		List<File> jarFileList = new ArrayList<File>();
+		FileUtil.getFiles(targetFile, jarFileList, fileFilter);
+		for (File file : jarFileList) {
 			URL url = file.toURI().toURL();
 			super.addURL(url);
 		}

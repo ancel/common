@@ -153,7 +153,6 @@ public class FileUtil {
 			}
         }
     	target.delete();
-        LOGGER.info("已删除---"+target.getPath());
     }
 	
 }
