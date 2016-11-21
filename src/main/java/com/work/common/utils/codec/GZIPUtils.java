@@ -4,9 +4,18 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.zip.GZIPOutputStream;
 
+import net.sf.json.JSONObject;
+
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringEscapeUtils;
 
 
+/**
+ * zip文件编码解码
+ * @author：wanghaibo 
+ * @creattime：2016年11月21日 下午5:57:44 
+ * 
+ */  
 public class GZIPUtils {
 	
 	public static byte[] encode(String target,String charset) throws IOException{
@@ -23,6 +32,12 @@ public class GZIPUtils {
 		try {
 			System.out.println(new String(Base64.encodeBase64(encode(str, "utf-8"))));
 			System.out.println(Base64.encodeBase64String(encode(str, "utf-8")));
+			str = "{\"flag\":[\"\u4f60\u597d\"]}";
+			System.out.println(str);
+			
+			JSONObject json = new JSONObject();
+			json.put("key", StringEscapeUtils.escapeJava("你好"));
+			System.out.println(json);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

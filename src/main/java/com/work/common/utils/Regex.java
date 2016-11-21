@@ -100,6 +100,7 @@ public class Regex {
 		String result = "";
 		while(m.find()){
 			result = m.group(index);
+			break;
 		}
 		return result;
 	}

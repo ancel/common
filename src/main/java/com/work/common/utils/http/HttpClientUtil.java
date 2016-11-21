@@ -1,10 +1,16 @@
 package com.work.common.utils.http;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FileExistsException;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -36,7 +42,7 @@ public class HttpClientUtil {
 			.getLogger(HttpClientUtil.class);
 
 	public static BasicHeader[] defaultHeaders;
-	public static CloseableHttpClient httpclient;
+	public static CloseableHttpClient defaultHttpClient;
 	static{
 		List<BasicHeader> headerList = new ArrayList<BasicHeader>();
 		headerList.add(new BasicHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
@@ -45,61 +51,66 @@ public class HttpClientUtil {
 //		headerList.add(new BasicHeader("Connection", "keep-alive"));
 		headerList.add(new BasicHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"));
 		defaultHeaders = headerList.toArray(new BasicHeader[headerList.size()]);
-		httpclient = HttpClientManager.getHttpClient();
+		defaultHttpClient = HttpClientManager.getHttpClient();
 	}
 	
-	
-	public static String getHttpResponseByPost(String url, String charset,
-			List<NameValuePair> params, String charset2, HttpHost httpHost,
-			String cookieSpecs) {
-		return getHttpResponseByPost(httpclient, url, charset, params, charset2, httpHost, cookieSpecs);
-	}
-	
-	public static String getHttpResponseByPost(CloseableHttpClient httpclient,String url, String charset,
-			List<NameValuePair> params, String charset2, HttpHost httpHost,
-			String cookieSpecs) {
-		RequestConfig config = RequestConfig.custom().setCookieSpec(cookieSpecs).setProxy(httpHost).build();
+	public static ResponseBall reqByPost(CloseableHttpClient httpclient, String url,
+			String charset, List<NameValuePair> params, String charset2,
+			HttpHost httpHost, String cookieSpecs, BasicHeader[] headers) {
+		RequestConfig config = RequestConfig.custom()
+				.setCookieSpec(cookieSpecs).setCircularRedirectsAllowed(true)
+				.setProxy(httpHost).build();
 		HttpPost httpPost = new HttpPost(url);
 		httpPost.setConfig(config);
-		httpPost.setHeaders(defaultHeaders);
+		if (null != headers && headers.length > 0) {
+			httpPost.setHeaders(headers);
+		}
 		CloseableHttpResponse response = null;
-		String reponseStr = null;
+		HttpEntity entity;
+		ResponseBall ball = new ResponseBall();
+		ball.setUrl(url);
+
+		String responseStr = null;
 		boolean flag = true;
 		while (flag) {
 			try {
 				httpPost.setEntity(new UrlEncodedFormEntity(params, charset));
-				
+
 				// 开始请求
 				response = httpclient.execute(httpPost);
-				
-				int status = response.getStatusLine().getStatusCode();
-				if (status >= 200 && status < 300) {
-					if (StringUtils.isBlank(charset2)) {
-						reponseStr = EntityUtils.toString(response.getEntity());
-					} else {
-						reponseStr = EntityUtils.toString(response.getEntity(),
-								charset2);
-					}
+
+				int statusCode = response.getStatusLine().getStatusCode();
+				ball.setStatusCode(statusCode);
+				entity = response.getEntity();
+				if (StringUtils.isNotBlank(charset2)) {
+					responseStr = EntityUtils.toString(entity, charset2);
 				} else {
-					LOGGER.error(url + "----" + status);
+					responseStr = EntityUtils.toString(entity);
+				}
+				ball.setContent(responseStr);
+				ball.setHeaders(response.getAllHeaders());
+				
+				if (statusCode < 200 && statusCode >= 400) {
+					LOGGER.error(url + "----" + statusCode);
+				} else if (statusCode >= 300 && statusCode < 400) {
+					Header locationHeader = response.getFirstHeader("Location");
+					if (locationHeader != null) {
+						ball = reqByGet(httpclient, locationHeader.getValue(),
+								"UTF-8", null,
+								CookieSpecs.BROWSER_COMPATIBILITY, headers);
+					}
 				}
 				
 				try {
 					httpPost.abort();
 				} finally {
 					response.close();
-					try {
-						httpclient.close();
-					} catch (IOException e2) {
-						LOGGER.error("request-------" + url, e2);
-					}finally{
-						flag = false;
-					}
+					flag = false;
 				}
 			} catch (Exception e) {
 				LOGGER.error("request-------" + url, e);
-				//代理挂了继续跑
-				if(e instanceof HttpHostConnectException){
+				// 代理挂了继续跑
+				if (e instanceof HttpHostConnectException) {
 					LOGGER.error("==============proxy down!!!========");
 					flag = true;
 					try {
@@ -107,75 +118,68 @@ public class HttpClientUtil {
 					} catch (InterruptedException e1) {
 						e1.printStackTrace();
 					}
-				}else{
+				} else {
+					// 非正常运行结束（除代理挂了的情况），关闭httpclient
 					LOGGER.error("request-------" + url, e);
-					//非正常运行结束（除代理挂了的情况），关闭httpclient
-					try {
-						httpclient.close();
-					} catch (IOException e2) {
-						LOGGER.error("request-------" + url, e2);
-					}finally{
-						flag = false;
-					}
+					flag = false;
 				}
 			}
 		}
-		
-		return reponseStr;
+
+		return ball;
 	}
 
-	public static String getHttpResponseByGet(String url, String charset,
-			HttpHost httpHost, String cookieSpecs) {
-		return getHttpResponseByGet(httpclient, url, charset, httpHost, cookieSpecs);
-
-	}
-	public static String getHttpResponseByGet(CloseableHttpClient httpclient,String url, String charset,
-			HttpHost httpHost, String cookieSpecs) {
+	public static ResponseBall reqByGet(CloseableHttpClient httpclient, String url,
+			String charset, HttpHost httpHost, String cookieSpecs,
+			BasicHeader[] headers) {
 		HttpGet httpGet = new HttpGet(url);
-		RequestConfig config = RequestConfig.custom().setCookieSpec(cookieSpecs).setCircularRedirectsAllowed(true).build();
+		RequestConfig config = RequestConfig.custom()
+				.setCookieSpec(cookieSpecs).setCircularRedirectsAllowed(true)
+				.setProxy(httpHost).build();
 		httpGet.setConfig(config);
-		httpGet.setHeaders(defaultHeaders);
+		if (null != headers && headers.length > 0) {
+			httpGet.setHeaders(headers);
+		}
 		CloseableHttpResponse response = null;
 		HttpEntity entity;
+		ResponseBall ball = new ResponseBall();
+		ball.setUrl(url);
+
 		String responseStr = null;
 		boolean flag = true;
-		while(flag){
+		while (flag) {
 			try {
 				// 开始请求
 				response = httpclient.execute(httpGet);
-				
-				int status = response.getStatusLine().getStatusCode();
-				if (status >= 200 && status < 300) {
-					entity = response.getEntity();
-					if(StringUtils.isBlank(charset)){
-						charset = getCharSet(response);
-					}
-					if (StringUtils.isNotBlank(charset)) {
-						responseStr = EntityUtils.toString(entity, charset);
-					}else{
-						responseStr = EntityUtils.toString(entity);
-					}
+
+				int statusCode = response.getStatusLine().getStatusCode();
+				ball.setStatusCode(statusCode);
+
+				entity = response.getEntity();
+				if (StringUtils.isNotBlank(charset)) {
+					responseStr = EntityUtils.toString(entity, charset);
 				} else {
-					LOGGER.error(url+"----"+status);
+					responseStr = EntityUtils.toString(entity);
 				}
-				
-				//正常运行结束，关闭httpclient
+
+				ball.setContent(responseStr);
+				ball.setHeaders(response.getAllHeaders());
+
+				if (statusCode < 200 && statusCode >= 400) {
+					LOGGER.error(url + "----" + statusCode);
+				}
+
+				// 正常运行结束，关闭httpclient
 				try {
 					httpGet.abort();
 				} finally {
 					response.close();
-					try {
-						httpclient.close();
-					} catch (IOException e2) {
-						LOGGER.error("request-------" + url, e2);
-					}finally{
-						flag = false;
-					}
+					flag = false;
 				}
 			} catch (Exception e) {
 				LOGGER.error("request-------" + url, e);
-				//代理挂了继续跑
-				if(e instanceof HttpHostConnectException){
+				// 代理挂了继续跑
+				if (e instanceof HttpHostConnectException) {
 					LOGGER.error("==============proxy down!!!========");
 					flag = true;
 					try {
@@ -183,23 +187,134 @@ public class HttpClientUtil {
 					} catch (InterruptedException e1) {
 						e1.printStackTrace();
 					}
-				}else{
+				} else {
+					// 非正常运行结束（除代理挂了的情况），关闭httpclient
 					LOGGER.error("request-------" + url, e);
-					//非正常运行结束（除代理挂了的情况），关闭httpclient
-					try {
-						httpclient.close();
-					} catch (IOException e2) {
-						LOGGER.error("request-------" + url, e2);
-					}finally{
-						flag = false;
-					}
+					flag = false;
 				}
 			}
 		}
-		return responseStr;
+		return ball;
+
+	}
+	
+	/**
+	 * 通过get方式下载文件
+	 * @param httpclient
+	 * @param url
+	 * @param charset
+	 * @param httpHost
+	 * @param cookieSpecs
+	 * @param headers
+	 * @param destFileName
+	 * @return
+	 * @throws FileExistsException 
+	 */
+	public static ResponseBall getFileByGet(CloseableHttpClient httpclient, String url,
+			String charset, HttpHost httpHost, String cookieSpecs,
+			BasicHeader[] headers,String destFileName) throws FileExistsException {
+		File destFile = new File(destFileName);
+		if(destFile.exists()){
+			throw new FileExistsException(destFile);
+		}
+		HttpGet httpGet = new HttpGet(url);
+		RequestConfig config = RequestConfig.custom()
+				.setCookieSpec(cookieSpecs).setCircularRedirectsAllowed(true)
+				.setProxy(httpHost).build();
+		httpGet.setConfig(config);
+		if (null != headers && headers.length > 0) {
+			httpGet.setHeaders(headers);
+		}
+		CloseableHttpResponse response = null;
+		HttpEntity entity;
+		ResponseBall ball = new ResponseBall();
+		ball.setUrl(url);
+		
+		String responseStr = null;
+		boolean flag = true;
+		while (flag) {
+			try {
+				// 开始请求
+				response = httpclient.execute(httpGet);
+				
+				int statusCode = response.getStatusLine().getStatusCode();
+				ball.setStatusCode(statusCode);
+				
+			   
+			    if(statusCode==200){
+			    	entity = response.getEntity();
+			    	InputStream in = entity.getContent();
+			    	FileOutputStream fout =new FileOutputStream(destFile);
+			    	IOUtils.copy(in, fout);
+					fout.flush();
+					fout.close();
+					in.close();
+			    }
+				
+				ball.setContent(responseStr);
+				ball.setHeaders(response.getAllHeaders());
+				
+				if (statusCode < 200 && statusCode >= 400) {
+					LOGGER.error(url + "----" + statusCode);
+				}
+				
+				// 正常运行结束，关闭httpclient
+				try {
+					httpGet.abort();
+				} finally {
+					response.close();
+					flag = false;
+				}
+			} catch (Exception e) {
+				LOGGER.error("request-------" + url, e);
+				// 代理挂了继续跑
+				if (e instanceof HttpHostConnectException) {
+					LOGGER.error("==============proxy down!!!========");
+					flag = true;
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+				} else {
+					// 非正常运行结束（除代理挂了的情况），关闭httpclient
+					LOGGER.error("request-------" + url, e);
+					flag = false;
+				}
+			}
+		}
+		return ball;
 		
 	}
 	
+	
+	public static String getHttpResponseByPost(CloseableHttpClient httpclient,String url, String charset,
+			List<NameValuePair> params, String charset2, HttpHost httpHost,
+			String cookieSpecs,BasicHeader[] headers) {
+		return reqByPost(httpclient, url, charset, params, charset2, httpHost, cookieSpecs, headers).getContent();
+	}
+	
+	public static String getHttpResponseByGet(CloseableHttpClient httpclient,String url, String charset,
+			HttpHost httpHost, String cookieSpecs,BasicHeader[] headers) {
+		return reqByGet(httpclient, url, charset, httpHost, cookieSpecs, headers).getContent();
+		
+	}
+	
+	
+	public static void close(CloseableHttpClient httpClient){
+		if(httpClient!=null){
+			try {
+				httpClient.close();
+			} catch (IOException e) {
+			}
+		}
+	}
+	
+	/**
+	 * 获取响应编码，ps：response只能EntityUtils.toString一次
+	 * @param response
+	 * @return
+	 */
 	public static String getCharSet(HttpResponse response){
 		HttpEntity entity = response.getEntity();
 		String charset = null;
@@ -223,6 +338,18 @@ public class HttpClientUtil {
 		} 
 		return charset;
 	}
+	
+	public static String getHttpResponseByPost(CloseableHttpClient httpclient,String url, String charset,
+			List<NameValuePair> params, String charset2, HttpHost httpHost,
+			String cookieSpecs) {
+		return getHttpResponseByPost(httpclient, url, charset, params, charset2, httpHost, cookieSpecs,defaultHeaders);
+	}
+	
+	public static String getHttpResponseByPost(String url, String charset,
+			List<NameValuePair> params, String charset2, HttpHost httpHost,
+			String cookieSpecs) {
+		return getHttpResponseByPost(defaultHttpClient, url, charset, params, charset2, httpHost, cookieSpecs,defaultHeaders);
+	}
 
 	public static String getHttpResponseByPost(String url,
 			List<NameValuePair> params, HttpHost httpHost, String charset,
@@ -235,6 +362,12 @@ public class HttpClientUtil {
 			List<NameValuePair> params, String charset, String charset2) {
 		return getHttpResponseByPost(url, charset, params, charset2, null,
 				CookieSpecs.IGNORE_COOKIES);
+	}
+	
+	public static String getHttpResponseByGet(String url, String charset,
+			HttpHost httpHost, String cookieSpecs) {
+		return getHttpResponseByGet(defaultHttpClient, url, charset, httpHost, cookieSpecs,defaultHeaders);
+
 	}
 
 	public static String getHttpResponseByGet(String url, HttpHost httpHost,
