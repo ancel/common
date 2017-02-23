@@ -41,12 +41,12 @@ public class HttpClientUtil {
 	public static final Logger LOGGER = LoggerFactory
 			.getLogger(HttpClientUtil.class);
 
-	public static BasicHeader[] defaultHeaders;
+	public static Header[] defaultHeaders;
 	public static CloseableHttpClient defaultHttpClient;
 	static{
 		List<BasicHeader> headerList = new ArrayList<BasicHeader>();
-		headerList.add(new BasicHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
-		headerList.add(new BasicHeader("Accept-Encoding", "gzip,deflate,sdch"));
+//		headerList.add(new BasicHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
+//		headerList.add(new BasicHeader("Accept-Encoding", "gzip,deflate,sdch"));
 		headerList.add(new BasicHeader("Accept-Language", "zh-CN,zh;q=0.8,en;q=0.6"));
 //		headerList.add(new BasicHeader("Connection", "keep-alive"));
 		headerList.add(new BasicHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"));
@@ -56,7 +56,7 @@ public class HttpClientUtil {
 	
 	public static ResponseBall reqByPost(CloseableHttpClient httpclient, String url,
 			String charset, List<NameValuePair> params, String charset2,
-			HttpHost httpHost, String cookieSpecs, BasicHeader[] headers) {
+			HttpHost httpHost, String cookieSpecs, Header[] headers) {
 		RequestConfig config = RequestConfig.custom()
 				.setCookieSpec(cookieSpecs).setCircularRedirectsAllowed(true)
 				.setProxy(httpHost).build();
@@ -131,7 +131,7 @@ public class HttpClientUtil {
 
 	public static ResponseBall reqByGet(CloseableHttpClient httpclient, String url,
 			String charset, HttpHost httpHost, String cookieSpecs,
-			BasicHeader[] headers) {
+			Header[] headers) {
 		HttpGet httpGet = new HttpGet(url);
 		RequestConfig config = RequestConfig.custom()
 				.setCookieSpec(cookieSpecs).setCircularRedirectsAllowed(true)
@@ -212,7 +212,7 @@ public class HttpClientUtil {
 	 */
 	public static ResponseBall getFileByGet(CloseableHttpClient httpclient, String url,
 			String charset, HttpHost httpHost, String cookieSpecs,
-			BasicHeader[] headers,String destFileName) throws FileExistsException {
+			Header[] headers,String destFileName) throws FileExistsException {
 		File destFile = new File(destFileName);
 		if(destFile.exists()){
 			throw new FileExistsException(destFile);
@@ -290,12 +290,12 @@ public class HttpClientUtil {
 	
 	public static String getHttpResponseByPost(CloseableHttpClient httpclient,String url, String charset,
 			List<NameValuePair> params, String charset2, HttpHost httpHost,
-			String cookieSpecs,BasicHeader[] headers) {
+			String cookieSpecs,Header[] headers) {
 		return reqByPost(httpclient, url, charset, params, charset2, httpHost, cookieSpecs, headers).getContent();
 	}
 	
 	public static String getHttpResponseByGet(CloseableHttpClient httpclient,String url, String charset,
-			HttpHost httpHost, String cookieSpecs,BasicHeader[] headers) {
+			HttpHost httpHost, String cookieSpecs,Header[] headers) {
 		return reqByGet(httpclient, url, charset, httpHost, cookieSpecs, headers).getContent();
 		
 	}

@@ -18,9 +18,9 @@ public class URLUtil {
 	
 	public static void main(String[] args) {
 		//绝对路径
-		String absolutePath = "http://www.aaa.com/1/2/3.html";
+		String absolutePath = "http://www.qianyan.biz/company/";
 		//相对路径
-		String relativePath = "../../a.jpg";
+		String relativePath = "qc-009-1.html";
 		try {
 			System.out.println(relToAbs(absolutePath, relativePath));
 		} catch (MalformedURLException e) {

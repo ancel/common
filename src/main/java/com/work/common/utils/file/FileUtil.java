@@ -16,8 +16,6 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.work.common.constant.FileConstant;
-
 /**
  * 文件工具类
  * 
@@ -26,6 +24,10 @@ import com.work.common.constant.FileConstant;
  */
 public class FileUtil {
 	public static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
+	
+	//换行符
+	public static final String LINE_SEPARATOR = System.getProperty("line.separator");
+	
 	/**
 	 * 获取文件行数
 	 * 
@@ -90,7 +92,7 @@ public class FileUtil {
 		File file = new File(fileName);
 		FileUtils.writeStringToFile(file, data,Charset.forName(charset),true);
 		if(flag){
-			FileUtils.writeStringToFile(file, FileConstant.LINE_SEPARATOR,Charset.forName(charset),true);
+			FileUtils.writeStringToFile(file, LINE_SEPARATOR,Charset.forName(charset),true);
 		}
 	}
 	
@@ -109,7 +111,7 @@ public class FileUtil {
 		out = new BufferedOutputStream(new FileOutputStream(file));
 		out.write(data.getBytes(charset));
 		if(flag){
-			out.write(FileConstant.LINE_SEPARATOR_BYTES);
+			out.write(LINE_SEPARATOR.getBytes());
 		}
 		out.close();
 	}

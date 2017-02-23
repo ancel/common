@@ -31,8 +31,8 @@ public class So360 {
 		}
 		CloseableHttpClient httpclient = HttpClients.custom()
 				.setSSLSocketFactory(sslsf).build();
-		String urlPath = "C:\\Users\\Li Yujie\\Desktop\\360_num_2.txt";
-		String outPath = "C:\\Users\\Li Yujie\\Desktop\\360_result_2.txt";
+		String urlPath = "C:\\Users\\Li Yujie\\Desktop\\360_num_20161020.txt";
+		String outPath = "C:\\Users\\Li Yujie\\Desktop\\360_result_20161021.txt";
 		BufferedReader br;
 		BufferedWriter bw;
 		try {
@@ -42,19 +42,24 @@ public class So360 {
 			String content = null;
 			int i=0;
 			HttpHost host = new HttpHost("172.18.19.254", 8080);
+//			HttpHost host = new HttpHost("proxy.dianhua.cn", 8080);
 			List<String> typeList = new ArrayList<String>(2);
+			String url;
 			while((line=br.readLine())!=null){
 				if(StringUtils.isNotBlank(line)){
 					while(true){
 						System.out.println((++i)+"\t"+line);
 						try {
-							content = HttpsClientUtil.getResponseByGet(httpclient,host, MessageFormat.format(urlTemplate, line.replaceAll("\\s+", "")));
+							url = MessageFormat.format(urlTemplate, line.replaceAll("\\s+", ""));
+							content = HttpsClientUtil.getResponseByGet(httpclient,host, url);
+//							content = HttpsClientUtil.getResponseByGet(httpclient,null, url);
 						} catch (Exception e) {
 							e.printStackTrace();
 							continue;
 						}
 						if(null==content||(StringUtils.isNotBlank(content)&&content.contains("系统检测到您操作过于频繁"))){
 							System.out.println("封锁");
+							httpclient.close();
 							httpclient = HttpClients.custom().setSSLSocketFactory(sslsf).build();
 							Thread.sleep(5000);
 						}
@@ -69,13 +74,15 @@ public class So360 {
 								||StringUtils.isNotBlank(Regex.regexReadOne(content, "<strong class=\"mohe-tips mh-hy\">\\s*?<img\\s*?src=\"([\\S]*?)\""))){
 							typeList.add("商户");
 						}
-						if(StringUtils.isNotBlank(Regex.regexReadOne(content, "<span\\s*?class=\"mohe-ph-mark\"\\s*?style=\"background-color:#e76639\">([\\s\\S]*?)</span>"))){
-							typeList.add("标记");
+						String flag = Regex.regexReadOne(content, "<span\\s*?class=\"mohe-ph-mark\"\\s*?style=\"background-color:#e76639\">([\\s\\S]*?)</span>");
+						if(StringUtils.isNotBlank(flag)){
+							typeList.add(flag.trim());
 						}
 						
 					}
 					if(typeList.size()==0){
-						continue;
+						typeList.add("无");
+//						continue;
 					}
 					bw.write(line+"\t"+StringUtils.join(typeList,"+"));
 					typeList.clear();
