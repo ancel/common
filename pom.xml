@@ -164,11 +164,6 @@
 		</dependency>
 
 		<!-- 简体和繁体转换 -->
-		<!-- <dependency>
-			<groupId>com</groupId>
-			<artifactId>zhconverter</artifactId>
-			<version>0.1.0</version>
-		</dependency> -->
 		 <dependency>
             <groupId>com</groupId>
             <artifactId>zhconverter</artifactId>
