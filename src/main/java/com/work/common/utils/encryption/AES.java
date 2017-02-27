@@ -21,7 +21,6 @@ import sun.misc.BASE64Encoder;
  * @creattime：2016年9月18日 下午2:57:36 
  * 
  */  
-@SuppressWarnings("restriction")
 public class AES {
     
     /**

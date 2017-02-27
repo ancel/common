@@ -2,6 +2,8 @@ package com.work.common.utils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 public class URLUtil {
 	/**
@@ -16,24 +18,25 @@ public class URLUtil {
 
 	}
 	
-	public static void main(String[] args) {
-		//绝对路径
-		String absolutePath = "http://www.qianyan.biz/company/";
-		//相对路径
-		String relativePath = "qc-009-1.html";
-		try {
-			System.out.println(relToAbs(absolutePath, relativePath));
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	/**
+	 * 
+	 * 将URL返回的字符串解析成Map, 解析的字符串格式：a=a&b=b&c=c
+	 * 
+	 * @param result
+	 * @return Map<String,String>
+	 */
+	public static Map<String, String> getUrlParamToMap(String urlParam) {
+		if (StringUtil.isNull(urlParam)) {
+			return null;
 		}
-		
-		relativePath = "javascript:void(0);";
-		try {
-			System.out.println(relToAbs(absolutePath, relativePath));
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
+		Map<String, String> map = new HashMap<String, String>();
+		String[] params = urlParam.split(StringUtil.MARK_AND);
+		for (String param : params) {
+			String[] values = param.split(StringUtil.MARK_EQUAL, 2);
+			String value = values.length == 2 ? values[1] : "";
+			map.put(values[0], value);
 		}
+		return map;
 	}
 }

@@ -23,7 +23,6 @@ import sun.misc.BASE64Encoder;
  * @creattime：2016年9月18日 下午2:53:48 
  * 
  */  
-@SuppressWarnings("restriction")
 public class EncryptionUtil {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(EncryptionUtil.class);

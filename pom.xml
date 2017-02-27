@@ -168,8 +168,8 @@
             <groupId>com</groupId>
             <artifactId>zhconverter</artifactId>
             <version>0.1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/ext_lib/zhconverter.jar</systemPath>
+            <!-- <scope>system</scope>
+            <systemPath>${basedir}/ext_lib/zhconverter.jar</systemPath> -->
 		</dependency> 
 
 		<!-- blerkeley DB -->
@@ -177,13 +177,6 @@
 			<groupId>com.sleepycat</groupId>
 			<artifactId>je</artifactId>
 			<version>6.2.7</version>
-		</dependency>
-
-		<!-- xpath解析 -->
-		<dependency>
-			<groupId>us.codecraft</groupId>
-			<artifactId>xsoup</artifactId>
-			<version>0.3.0</version>
 		</dependency>
 
 		<!-- freemaker -->
