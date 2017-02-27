@@ -23,15 +23,22 @@ import org.slf4j.LoggerFactory;
 public class FileRecordHelper {
 	private static final Logger LOGGER = LoggerFactory.getLogger(FileRecordHelper.class);
 	public static Map<String, List<String>> map = new HashMap<>();
-	public static int flushNum = 50;
+	private int flushNum = 50;
 	
+	public FileRecordHelper() {
+	}
+
+	public FileRecordHelper(int flushNum) {
+		this.flushNum = flushNum;
+	}
+
 	/**
 	 * 写数据，若是数据量满足flushNum则刷入文件
 	 * @param errorFileName
 	 * @param line
 	 * @throws IOException 
 	 */
-	public synchronized static void write(String fileName,String line){
+	public synchronized void write(String fileName,String line){
 		List<String> record = map.get(fileName);
 		int lineNum;
 		if(record==null){
@@ -62,7 +69,7 @@ public class FileRecordHelper {
 	 * 清空缓存数据
 	 * @throws IOException 
 	 */
-	public synchronized static void flush(){
+	public synchronized void flush(){
 		Set<String> keys = map.keySet();
 		for (String key : keys) {
 			StringBuffer sb = new StringBuffer();
@@ -80,4 +87,13 @@ public class FileRecordHelper {
 			map.put(key, record);
 		}
 	}
+
+	public int getFlushNum() {
+		return flushNum;
+	}
+
+	public void setFlushNum(int flushNum) {
+		this.flushNum = flushNum;
+	}
+	
 }
