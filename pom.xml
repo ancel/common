@@ -164,11 +164,13 @@
 		</dependency>
 
 		<!-- 简体和繁体转换 -->
-		<dependency>
-			<groupId>com</groupId>
-			<artifactId>zhconverter</artifactId>
-			<version>0.1.0</version>
-		</dependency>
+		 <dependency>
+            <groupId>com</groupId>
+            <artifactId>zhconverter</artifactId>
+            <version>0.1.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/ext_lib/zhconverter.jar</systemPath>
+		</dependency> 
 
 		<!-- blerkeley DB -->
 		<dependency>
@@ -233,6 +235,15 @@
 
 
 	</dependencies>
+	
+	<repositories>
+		<repository>
+			<id>oracleReleases</id>
+			<name>Oracle Released Java Packages</name>
+			<url>http://download.oracle.com/maven</url>
+			<layout>default</layout>
+		</repository>
+	</repositories>
 
 	<build>
 		<plugins>
