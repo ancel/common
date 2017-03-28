@@ -65,6 +65,18 @@ public class CodingUtil {
 	}
 	
 	/**
+	 * 判断是否为数字
+	 * @return
+	 */
+	public static boolean isNumber(char c){
+		Character.UnicodeBlock ub = Character.UnicodeBlock.of(c);
+	    if (ub == Character.UnicodeBlock.NUMBER_FORMS) {
+	        return true;
+	    }
+	    return false;
+	}
+	
+	/**
 	 * 判断字符串是否是乱码
 	 * @param strName 字符串
 	 * @return 是否是乱码
@@ -83,8 +95,10 @@ public class CodingUtil {
 	    for (int i = 0; i < ch.length; i++) {
 	        char c = ch[i];
 	        if (!Character.isLetterOrDigit(c)) {
-	            if (!isChinese(c)) {
-	                count = count + 1;
+	        	if (!isNumber(c)) {
+	        		if (!isChinese(c)) {
+		                count = count + 1;
+		            }
 	            }
 	        }
 	    }
