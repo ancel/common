@@ -130,7 +130,7 @@ public class Regex {
 	 * @param input
 	 * @return
 	 */
-	public static boolean check(String target,String regex) {
+	public static boolean check(String regex, String target) {
 		if (StringUtils.isNotEmpty(regex) && StringUtils.isNotEmpty(target)) {
 			return Pattern.matches(regex, target);
 		}
