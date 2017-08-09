@@ -45,10 +45,10 @@ public class HttpClientUtil {
 	public static CloseableHttpClient defaultHttpClient;
 	static{
 		List<BasicHeader> headerList = new ArrayList<BasicHeader>();
-//		headerList.add(new BasicHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
-//		headerList.add(new BasicHeader("Accept-Encoding", "gzip,deflate,sdch"));
+		headerList.add(new BasicHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
+		headerList.add(new BasicHeader("Accept-Encoding", "gzip,deflate,sdch"));
 		headerList.add(new BasicHeader("Accept-Language", "zh-CN,zh;q=0.8,en;q=0.6"));
-//		headerList.add(new BasicHeader("Connection", "keep-alive"));
+		headerList.add(new BasicHeader("Connection", "keep-alive"));
 		headerList.add(new BasicHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"));
 		defaultHeaders = headerList.toArray(new BasicHeader[headerList.size()]);
 		defaultHttpClient = HttpClientManager.getHttpClient();
@@ -189,6 +189,7 @@ public class HttpClientUtil {
 					}
 				} else {
 					// 非正常运行结束（除代理挂了的情况），关闭httpclient
+					e.printStackTrace();
 					LOGGER.error("request-------" + url, e);
 					flag = false;
 				}

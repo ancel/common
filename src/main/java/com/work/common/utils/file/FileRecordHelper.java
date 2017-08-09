@@ -10,6 +10,8 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.work.common.constant.CharSet;
+
 
 
 /**
@@ -48,12 +50,8 @@ public class FileRecordHelper {
 			record.add(line);
 			lineNum = record.size();
 			if(lineNum%flushNum==0){
-				StringBuffer sb = new StringBuffer();
-				for (String string : record) {
-						sb.append(string).append(FileUtil.LINE_SEPARATOR);
-				}
 				try {
-					FileUtil.write(fileName, sb.toString(), "UTF-8", false);
+					FileUtil.write(fileName, record,  CharSet.UTF_8, true, true);
 				} catch (IOException e) {
 					LOGGER.error("文件写入失败:"+fileName,e);
 					System.exit(1);
@@ -72,13 +70,9 @@ public class FileRecordHelper {
 	public synchronized void flush(){
 		Set<String> keys = map.keySet();
 		for (String key : keys) {
-			StringBuffer sb = new StringBuffer();
 			List<String> record = map.get(key);
-			for (String string : record) {
-				sb.append(string).append(FileUtil.LINE_SEPARATOR);
-			}
 			try {
-				FileUtil.write(key, sb.toString(), "UTF-8", false);
+				FileUtil.write(key, record,  CharSet.UTF_8, true, true);
 			} catch (IOException e) {
 				LOGGER.error("文件写入失败:"+key,e);
 				System.exit(1);
