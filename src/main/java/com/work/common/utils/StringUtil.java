@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Stack;
 import java.util.UUID;
 
 import org.apache.commons.lang.RandomStringUtils;
@@ -419,6 +420,40 @@ public abstract class StringUtil {
 			
 		}
 		return flag;
+	}
+	
+	/**
+	 * 删除第num层以下的嵌套括号,ps:括号不匹配时返回空字符串
+	 * 
+	 * @param str
+	 * @param num
+	 *            删除的嵌套层
+	 * @return
+	 */
+	public static String deleteNestBracket(String str, int num) {
+		if (StringUtils.isBlank(str)) {
+			return "";
+		}
+		Stack<Character> sk = new Stack<Character>();
+		int bracketNum = 0;
+		for (int i = 0; i < str.length(); i++) {
+			if (str.charAt(i) == '(') {
+				bracketNum++;
+			}
+			if (bracketNum < num) {
+				sk.push(str.charAt(i));
+			}
+			if (str.charAt(i) == ')') {
+				bracketNum--;
+			}
+			if (bracketNum < 0) {
+				return "";
+			}
+		}
+		if (bracketNum != 0) {
+			return "";
+		}
+		return StringUtils.join(sk, "");
 	}
 	
 	/**
