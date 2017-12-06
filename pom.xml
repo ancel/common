@@ -219,10 +219,16 @@
 			<version>1.6</version>
 		</dependency>
 
+		<!-- c3p0 连接池 -->
 		<dependency>
-			<groupId>c3p0</groupId>
-			<artifactId>c3p0</artifactId>
-			<version>0.9.1.2</version>
+		    <groupId>com.mchange</groupId>
+		    <artifactId>c3p0</artifactId>
+		    <version>0.9.5.2</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.mchange</groupId>
+		    <artifactId>mchange-commons-java</artifactId>
+		    <version>0.2.12</version>
 		</dependency>
 
 		<!-- pdf -->

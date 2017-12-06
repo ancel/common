@@ -1,5 +1,6 @@
 package com.work.common.utils.http;
 
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.CodingErrorAction;
@@ -130,6 +131,11 @@ public class HttpClientManager {
 	public static void main(String[] args) {
 		String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&types=food&name=harbour&sensor=false&key=AIzaSyBR0i9RL44iG8IUx9LcCgxsYOJf6FutQhE";
 		HttpHost httpHost = new HttpHost("proxy.dianhua.cn", 8080);
-		System.out.println(HttpClientUtil.getHttpResponseByGet(url, httpHost, CharSet.UTF_8));
+		try {
+			System.out.println(HttpClientUtil.getHttpResponseByGet(url, httpHost, CharSet.UTF_8));
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

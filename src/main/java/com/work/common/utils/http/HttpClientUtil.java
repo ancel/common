@@ -1,14 +1,10 @@
 package com.work.common.utils.http;
 
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.io.FileExistsException;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -43,6 +39,8 @@ public class HttpClientUtil {
 
 	public static Header[] defaultHeaders;
 	public static CloseableHttpClient defaultHttpClient;
+	public static final int defaultConnectTimeout = 30000;
+	public static final int defaultSocketTimeout = 60000;
 	static{
 		List<BasicHeader> headerList = new ArrayList<BasicHeader>();
 		headerList.add(new BasicHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"));
@@ -53,12 +51,14 @@ public class HttpClientUtil {
 		defaultHeaders = headerList.toArray(new BasicHeader[headerList.size()]);
 		defaultHttpClient = HttpClientManager.getHttpClient();
 	}
-	
-	public static ResponseBall reqByPost(CloseableHttpClient httpclient, String url,
+	public static ResponseBall reqByPost(CloseableHttpClient httpclient, int connectTimeout, int socketTimeout, String url,
 			String charset, List<NameValuePair> params, String charset2,
-			HttpHost httpHost, String cookieSpecs, Header[] headers) {
+			HttpHost httpHost, String cookieSpecs, Header[] headers){
 		RequestConfig config = RequestConfig.custom()
-				.setCookieSpec(cookieSpecs).setCircularRedirectsAllowed(true)
+				.setCookieSpec(cookieSpecs)
+				.setCircularRedirectsAllowed(true)
+				.setConnectTimeout(connectTimeout)
+				.setSocketTimeout(socketTimeout)
 				.setProxy(httpHost).build();
 		HttpPost httpPost = new HttpPost(url);
 		httpPost.setConfig(config);
@@ -70,7 +70,7 @@ public class HttpClientUtil {
 		ResponseBall ball = new ResponseBall();
 		ball.setUrl(url);
 
-		String responseStr = null;
+		byte[] resposneBytes;
 		boolean flag = true;
 		while (flag) {
 			try {
@@ -83,11 +83,10 @@ public class HttpClientUtil {
 				ball.setStatusCode(statusCode);
 				entity = response.getEntity();
 				if (StringUtils.isNotBlank(charset2)) {
-					responseStr = EntityUtils.toString(entity, charset2);
-				} else {
-					responseStr = EntityUtils.toString(entity);
+					ball.setCharset(charset2);
 				}
-				ball.setContent(responseStr);
+				resposneBytes = EntityUtils.toByteArray(entity);
+				ball.setContentBytes(resposneBytes);
 				ball.setHeaders(response.getAllHeaders());
 				
 				if (statusCode < 200 && statusCode >= 400) {
@@ -128,13 +127,16 @@ public class HttpClientUtil {
 
 		return ball;
 	}
-
-	public static ResponseBall reqByGet(CloseableHttpClient httpclient, String url,
+	
+	public static ResponseBall reqByGet(CloseableHttpClient httpclient, int connectTimeout, int socketTimeout, String url,
 			String charset, HttpHost httpHost, String cookieSpecs,
 			Header[] headers) {
 		HttpGet httpGet = new HttpGet(url);
 		RequestConfig config = RequestConfig.custom()
-				.setCookieSpec(cookieSpecs).setCircularRedirectsAllowed(true)
+				.setCookieSpec(cookieSpecs)
+				.setCircularRedirectsAllowed(true)
+				.setConnectTimeout(connectTimeout)
+				.setSocketTimeout(socketTimeout)
 				.setProxy(httpHost).build();
 		httpGet.setConfig(config);
 		if (null != headers && headers.length > 0) {
@@ -145,7 +147,7 @@ public class HttpClientUtil {
 		ResponseBall ball = new ResponseBall();
 		ball.setUrl(url);
 
-		String responseStr = null;
+		byte[] resposneBytes;
 		boolean flag = true;
 		while (flag) {
 			try {
@@ -157,12 +159,10 @@ public class HttpClientUtil {
 
 				entity = response.getEntity();
 				if (StringUtils.isNotBlank(charset)) {
-					responseStr = EntityUtils.toString(entity, charset);
-				} else {
-					responseStr = EntityUtils.toString(entity);
+					ball.setCharset(charset);
 				}
-
-				ball.setContent(responseStr);
+				resposneBytes = EntityUtils.toByteArray(entity);
+				ball.setContentBytes(resposneBytes);
 				ball.setHeaders(response.getAllHeaders());
 
 				if (statusCode < 200 && statusCode >= 400) {
@@ -189,7 +189,6 @@ public class HttpClientUtil {
 					}
 				} else {
 					// 非正常运行结束（除代理挂了的情况），关闭httpclient
-					e.printStackTrace();
 					LOGGER.error("request-------" + url, e);
 					flag = false;
 				}
@@ -199,104 +198,26 @@ public class HttpClientUtil {
 
 	}
 	
-	/**
-	 * 通过get方式下载文件
-	 * @param httpclient
-	 * @param url
-	 * @param charset
-	 * @param httpHost
-	 * @param cookieSpecs
-	 * @param headers
-	 * @param destFileName
-	 * @return
-	 * @throws FileExistsException 
-	 */
-	public static ResponseBall getFileByGet(CloseableHttpClient httpclient, String url,
+	public static ResponseBall reqByPost(CloseableHttpClient httpclient, String url,
+			String charset, List<NameValuePair> params, String charset2,
+			HttpHost httpHost, String cookieSpecs, Header[] headers) {
+		return reqByPost(httpclient, defaultConnectTimeout, defaultSocketTimeout, url, charset, params, charset2, httpHost, cookieSpecs, headers);
+	}
+	
+	public static ResponseBall reqByGet(CloseableHttpClient httpclient, String url,
 			String charset, HttpHost httpHost, String cookieSpecs,
-			Header[] headers,String destFileName) throws FileExistsException {
-		File destFile = new File(destFileName);
-		if(destFile.exists()){
-			throw new FileExistsException(destFile);
-		}
-		HttpGet httpGet = new HttpGet(url);
-		RequestConfig config = RequestConfig.custom()
-				.setCookieSpec(cookieSpecs).setCircularRedirectsAllowed(true)
-				.setProxy(httpHost).build();
-		httpGet.setConfig(config);
-		if (null != headers && headers.length > 0) {
-			httpGet.setHeaders(headers);
-		}
-		CloseableHttpResponse response = null;
-		HttpEntity entity;
-		ResponseBall ball = new ResponseBall();
-		ball.setUrl(url);
-		
-		String responseStr = null;
-		boolean flag = true;
-		while (flag) {
-			try {
-				// 开始请求
-				response = httpclient.execute(httpGet);
-				
-				int statusCode = response.getStatusLine().getStatusCode();
-				ball.setStatusCode(statusCode);
-				
-			   
-			    if(statusCode==200){
-			    	entity = response.getEntity();
-			    	InputStream in = entity.getContent();
-			    	FileOutputStream fout =new FileOutputStream(destFile);
-			    	IOUtils.copy(in, fout);
-					fout.flush();
-					fout.close();
-					in.close();
-			    }
-				
-				ball.setContent(responseStr);
-				ball.setHeaders(response.getAllHeaders());
-				
-				if (statusCode < 200 && statusCode >= 400) {
-					LOGGER.error(url + "----" + statusCode);
-				}
-				
-				// 正常运行结束，关闭httpclient
-				try {
-					httpGet.abort();
-				} finally {
-					response.close();
-					flag = false;
-				}
-			} catch (Exception e) {
-				LOGGER.error("request-------" + url, e);
-				// 代理挂了继续跑
-				if (e instanceof HttpHostConnectException) {
-					LOGGER.error("==============proxy down!!!========");
-					flag = true;
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
-					}
-				} else {
-					// 非正常运行结束（除代理挂了的情况），关闭httpclient
-					LOGGER.error("request-------" + url, e);
-					flag = false;
-				}
-			}
-		}
-		return ball;
-		
+			Header[] headers) {
+		return reqByGet(httpclient, defaultConnectTimeout, defaultSocketTimeout, url, charset, httpHost, cookieSpecs, headers);
 	}
-	
 	
 	public static String getHttpResponseByPost(CloseableHttpClient httpclient,String url, String charset,
 			List<NameValuePair> params, String charset2, HttpHost httpHost,
-			String cookieSpecs,Header[] headers) {
+			String cookieSpecs,Header[] headers) throws UnsupportedEncodingException {
 		return reqByPost(httpclient, url, charset, params, charset2, httpHost, cookieSpecs, headers).getContent();
 	}
 	
 	public static String getHttpResponseByGet(CloseableHttpClient httpclient,String url, String charset,
-			HttpHost httpHost, String cookieSpecs,Header[] headers) {
+			HttpHost httpHost, String cookieSpecs,Header[] headers) throws UnsupportedEncodingException {
 		return reqByGet(httpclient, url, charset, httpHost, cookieSpecs, headers).getContent();
 		
 	}
@@ -342,48 +263,48 @@ public class HttpClientUtil {
 	
 	public static String getHttpResponseByPost(CloseableHttpClient httpclient,String url, String charset,
 			List<NameValuePair> params, String charset2, HttpHost httpHost,
-			String cookieSpecs) {
+			String cookieSpecs) throws UnsupportedEncodingException {
 		return getHttpResponseByPost(httpclient, url, charset, params, charset2, httpHost, cookieSpecs,defaultHeaders);
 	}
 	
 	public static String getHttpResponseByPost(String url, String charset,
 			List<NameValuePair> params, String charset2, HttpHost httpHost,
-			String cookieSpecs) {
+			String cookieSpecs) throws UnsupportedEncodingException {
 		return getHttpResponseByPost(defaultHttpClient, url, charset, params, charset2, httpHost, cookieSpecs,defaultHeaders);
 	}
 
 	public static String getHttpResponseByPost(String url,
 			List<NameValuePair> params, HttpHost httpHost, String charset,
-			String charset2) {
+			String charset2) throws UnsupportedEncodingException {
 		return getHttpResponseByPost(url, charset, params, charset2, httpHost,
 				CookieSpecs.IGNORE_COOKIES);
 	}
 
 	public static String getHttpResponseByPost(String url,
-			List<NameValuePair> params, String charset, String charset2) {
+			List<NameValuePair> params, String charset, String charset2) throws UnsupportedEncodingException {
 		return getHttpResponseByPost(url, charset, params, charset2, null,
 				CookieSpecs.IGNORE_COOKIES);
 	}
 	
 	public static String getHttpResponseByGet(String url, String charset,
-			HttpHost httpHost, String cookieSpecs) {
+			HttpHost httpHost, String cookieSpecs) throws UnsupportedEncodingException {
 		return getHttpResponseByGet(defaultHttpClient, url, charset, httpHost, cookieSpecs,defaultHeaders);
 
 	}
 
 	public static String getHttpResponseByGet(String url, HttpHost httpHost,
-			String charset) {
+			String charset) throws UnsupportedEncodingException {
 		return getHttpResponseByGet(url, charset, httpHost,
 				CookieSpecs.IGNORE_COOKIES);
 	}
 
-	public static String getHttpResponseByGet(String url, String charset) {
+	public static String getHttpResponseByGet(String url, String charset) throws UnsupportedEncodingException {
 		return getHttpResponseByGet(url, charset, null,
 				CookieSpecs.IGNORE_COOKIES);
 	}
 
 	public static String getHttpResponseByGet(String url, String charset,
-			String cookieSpecs) {
+			String cookieSpecs) throws UnsupportedEncodingException {
 		return getHttpResponseByGet(url, charset, null, cookieSpecs);
 	}
 
@@ -396,8 +317,9 @@ public class HttpClientUtil {
 	 * @param charSet
 	 * @param visitLimit
 	 * @return
+	 * @throws UnsupportedEncodingException 
 	 */
-	public static String getResponse(String url,HttpHost httpHost,String charSet,int visitLimit){
+	public static String getResponse(String url,HttpHost httpHost,String charSet,int visitLimit) throws UnsupportedEncodingException{
 		String response = null;
 		//无限循环
 		if(visitLimit<1){
@@ -440,8 +362,9 @@ public class HttpClientUtil {
 	 * @param charset2
 	 * @param visitLimit
 	 * @return
+	 * @throws UnsupportedEncodingException 
 	 */
-	public static String getResponse(List<NameValuePair> params,String url,String charset,String charset2,int visitLimit){
+	public static String getResponse(List<NameValuePair> params,String url,String charset,String charset2,int visitLimit) throws UnsupportedEncodingException{
 		String response = null;
 		if(visitLimit<1){
 			while(true){
