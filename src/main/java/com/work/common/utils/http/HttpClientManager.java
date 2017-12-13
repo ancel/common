@@ -1,6 +1,6 @@
 package com.work.common.utils.http;
 
-import java.io.UnsupportedEncodingException;
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.CodingErrorAction;
@@ -12,7 +12,6 @@ import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 
 import org.apache.http.Consts;
-import org.apache.http.HttpHost;
 import org.apache.http.client.config.AuthSchemes;
 import org.apache.http.client.config.CookieSpecs;
 import org.apache.http.client.config.RequestConfig;
@@ -29,6 +28,7 @@ import org.apache.http.conn.socket.ConnectionSocketFactory;
 import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -40,8 +40,6 @@ import org.apache.http.impl.io.DefaultHttpRequestWriterFactory;
 import org.apache.http.impl.io.DefaultHttpResponseParserFactory;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
-
-import com.work.common.constant.CharSet;
 
 public final class HttpClientManager{
 	/**
@@ -56,7 +54,8 @@ public final class HttpClientManager{
 	private RequestConfig defaultRequestConfig;
 	private Registry<ConnectionSocketFactory> socketFactoryRegistry;
 	private HttpConnectionFactory<HttpRoute, ManagedHttpClientConnection> connFactory;
-	private SSLConnectionSocketFactory socketFactory;
+	private SSLConnectionSocketFactory sslConnectionSocketFactory;
+	private SSLConnectionSocketFactory certSSLConnectionSocketFactory;
 	private DnsResolver dnsResolver;
 	private SocketConfig socketConfig;
 	private ConnectionConfig connectionConfig;
@@ -69,7 +68,7 @@ public final class HttpClientManager{
 	public static HttpClientManager getInstance() {
 		return InstanceHolder.INSTANCE;
 	}
-	private HttpClientManager(){
+	public HttpClientManager(){
 		init();
 	}
 	private void init(){
@@ -77,11 +76,11 @@ public final class HttpClientManager{
 				new DefaultHttpRequestWriterFactory(),
 				new DefaultHttpResponseParserFactory());
 
-		socketFactory = getTrustSSLConnectionSocketFactory();
+		sslConnectionSocketFactory = getTrustSSLConnectionSocketFactory();
 		socketFactoryRegistry = RegistryBuilder
 				.<ConnectionSocketFactory> create()
 				.register("http", PlainConnectionSocketFactory.INSTANCE)
-				.register("https", socketFactory)
+				.register("https", sslConnectionSocketFactory)
 				.build();
 
 		dnsResolver = new SystemDefaultDnsResolver() {
@@ -135,7 +134,7 @@ public final class HttpClientManager{
 		} catch (Exception e) {
 			throw new RuntimeException("SSLContext初始化异常!", e);
 		}
-		return new SniSSLSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+		return new SniSSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
 	}
 
 	public PoolingHttpClientConnectionManager getConnManager() {
@@ -148,6 +147,28 @@ public final class HttpClientManager{
 		connManager.setMaxTotal(MAX_TOTAL_CONNECTIONS);
 		connManager.setDefaultMaxPerRoute(MAX_PER_ROUTE);
 		return connManager;
+	}
+	
+	/**
+	 * 1、浏览器导出证书文件，xx.cer，例如chrome可以打开开发者工具之后选择security，然后点击view certificate导出。或者使用ie打开网页后右键属性导出
+	 * 2、使用keytool工具将证书转换成密钥形式
+     * keytool -import -alias xx -file d:\xx.cer -keystore xx.keystore
+	 * @param keyStorePath
+	 * @param keyStorePassword
+	 * @return
+	 */
+	public static SSLConnectionSocketFactory getSSLConnectionSocketFactory(String keyStorePath,String keyStorePassword){
+		SSLConnectionSocketFactory sslsf = null;
+		SSLContext sslcontext;
+		try {
+			sslcontext = SSLContexts.custom()
+					.loadTrustMaterial(new File(keyStorePath), keyStorePassword.toCharArray(), new TrustSelfSignedStrategy())
+					.build();
+		} catch (Exception e) {
+			throw new RuntimeException("导入证书异常！", e);
+		} 
+		sslsf = new SSLConnectionSocketFactory(sslcontext, NoopHostnameVerifier.INSTANCE);
+		return sslsf;
 	}
 
 	public CloseableHttpClient getDefaultHttpClient() {
@@ -162,17 +183,16 @@ public final class HttpClientManager{
 	public static CloseableHttpClient getHttpClient() {
 		return HttpClientManager.getInstance().getDefaultHttpClient();
 	}
-
-	public static void main(String[] args) {
-		String url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=-33.8670522,151.1957362&radius=500&types=food&name=harbour&sensor=false&key=AIzaSyBR0i9RL44iG8IUx9LcCgxsYOJf6FutQhE";
-		HttpHost httpHost = new HttpHost("proxy.dianhua.cn", 8080);
-		httpHost = null;
-		try {
-			System.out.println(HttpClientUtil.getHttpResponseByGet(url,
-					httpHost, CharSet.UTF_8));
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+	
+	public CloseableHttpClient getDefaultHttpsClient(String keyStorePath,String keyStorePassword){
+		if(null==certSSLConnectionSocketFactory){
+			certSSLConnectionSocketFactory = getSSLConnectionSocketFactory(keyStorePath, keyStorePassword);
 		}
+		CloseableHttpClient httpclient = HttpClients.custom()
+				.setConnectionManager(getConnManager())
+				.setDefaultCookieStore(new BasicCookieStore())
+				.setDefaultCredentialsProvider(new BasicCredentialsProvider())
+				.setDefaultRequestConfig(defaultRequestConfig).build();
+		return httpclient;
 	}
 }

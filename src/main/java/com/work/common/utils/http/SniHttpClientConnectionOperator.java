@@ -34,10 +34,10 @@ public class SniHttpClientConnectionOperator extends DefaultHttpClientConnection
         try {
             super.connect(conn, host, localAddress, connectTimeout, socketConfig, context);
         } catch (SSLProtocolException e) {
-            Boolean enableSniValue = (Boolean) context.getAttribute(SniSSLSocketFactory.ENABLE_SNI);
+            Boolean enableSniValue = (Boolean) context.getAttribute(SniSSLConnectionSocketFactory.ENABLE_SNI);
             boolean enableSni = enableSniValue == null || enableSniValue;
             if (enableSni && e.getMessage() != null && e.getMessage().equals("handshake alert:  unrecognized_name")) {
-                context.setAttribute(SniSSLSocketFactory.ENABLE_SNI, false);
+                context.setAttribute(SniSSLConnectionSocketFactory.ENABLE_SNI, false);
                 super.connect(conn, host, localAddress, connectTimeout, socketConfig, context);
             } else {
                 throw e;

@@ -9,7 +9,7 @@ import javax.net.ssl.SSLContext;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.protocol.HttpContext;
 
-public class SniSSLSocketFactory extends SSLConnectionSocketFactory {
+public class SniSSLConnectionSocketFactory extends SSLConnectionSocketFactory {
 
     public static final String ENABLE_SNI = "__enable_sni__";
 
@@ -17,7 +17,7 @@ public class SniSSLSocketFactory extends SSLConnectionSocketFactory {
      * Implement any constructor you need for your particular application -
      * SSLConnectionSocketFactory has many variants
      */
-    public SniSSLSocketFactory(final SSLContext sslContext, final HostnameVerifier verifier) {
+    public SniSSLConnectionSocketFactory(final SSLContext sslContext, final HostnameVerifier verifier) {
         super(sslContext, verifier);
     }
 
