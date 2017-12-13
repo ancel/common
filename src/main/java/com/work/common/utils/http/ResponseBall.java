@@ -60,11 +60,18 @@ public class ResponseBall {
 	public void setCharset(String charset) {
 		this.charset = charset;
 	}
+	
 	@Override
 	public String toString() {
-		return "ResponseBall [url=" + url + ", statusCode=" + statusCode
-				+ ", headers=" + Arrays.toString(headers) + ", contentBytes="
-				+ Arrays.toString(contentBytes) + "]";
+		try {
+			return "ResponseBall [url=" + url + ", statusCode=" + statusCode
+					+ ", headers=" + Arrays.toString(headers) + ", content="
+					+ getContent() + "]";
+		} catch (UnsupportedEncodingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	

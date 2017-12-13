@@ -96,7 +96,7 @@ public class HttpClientUtil {
 					if (locationHeader != null) {
 						ball = reqByGet(httpclient, locationHeader.getValue(),
 								"UTF-8", null,
-								CookieSpecs.BROWSER_COMPATIBILITY, headers);
+								CookieSpecs.DEFAULT, headers);
 					}
 				}
 				

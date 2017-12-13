@@ -18,11 +18,12 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLContexts;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,13 +61,11 @@ public class HttpsClientUtil {
 		trustStore.load(instream, keyStorePassword.toCharArray());
 
 		// Trust own CA and all self-signed certs
-		SSLContext sslcontext = SSLContexts.custom()
+		SSLContext sslcontext = SSLContextBuilder.create()
 				.loadTrustMaterial(trustStore, new TrustSelfSignedStrategy())
 				.build();
 		// Allow TLSv1 protocol only
-		sslsf = new SSLConnectionSocketFactory(
-				sslcontext, new String[] { "TLSv1" }, null,
-				SSLConnectionSocketFactory.BROWSER_COMPATIBLE_HOSTNAME_VERIFIER);
+		sslsf = new SSLConnectionSocketFactory(sslcontext, new String[] { "TLSv1" }, null, NoopHostnameVerifier.INSTANCE);
 		
 		return sslsf;
 	}
