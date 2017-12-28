@@ -16,9 +16,8 @@ import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * 文件工具类
@@ -27,7 +26,6 @@ import org.slf4j.LoggerFactory;
  * 
  */  
 public class FileUtil {
-	public static final Logger LOGGER = LoggerFactory.getLogger(FileUtil.class);
 	
 	//换行符
 	public static final String LINE_SEPARATOR = System.getProperty("line.separator");
@@ -169,14 +167,15 @@ public class FileUtil {
 		if(data==null||data.size()<1){
 			return;
 		}
-		
+		File targetFile = new File(filePath);
+		filePath = targetFile.getAbsolutePath();
 		synchronized (FILE_LOCK_MAP) {
 			if(!FILE_LOCK_MAP.containsKey(filePath)){
 				FILE_LOCK_MAP.put(filePath, new ReentrantReadWriteLock());
 			}
 		}
 		FILE_LOCK_MAP.get(filePath).writeLock().lock();
-		createFile(new File(filePath));
+		createFile(targetFile);
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath,append), charset));
@@ -187,14 +186,7 @@ public class FileUtil {
 				}
 			}
 		} finally{
-			if(writer!=null){
-				try {
-					writer.flush();
-					writer.close();
-				} catch (Exception e) {
-					LOGGER.error("[write flush or close failure,filepath="+filePath+"]");
-				}
-			}
+			IOUtils.closeQuietly(writer);
 			FILE_LOCK_MAP.get(filePath).writeLock().unlock();
 		}
 		
@@ -212,27 +204,21 @@ public class FileUtil {
 		if(data==null){
 			return;
 		}
-		
+		File targetFile = new File(filePath);
+		filePath = targetFile.getAbsolutePath();
 		synchronized (FILE_LOCK_MAP) {
 			if(!FILE_LOCK_MAP.containsKey(filePath)){
 				FILE_LOCK_MAP.put(filePath, new ReentrantReadWriteLock());
 			}
 		}
 		FILE_LOCK_MAP.get(filePath).writeLock().lock();
-		createFile(new File(filePath));
+		createFile(targetFile);
 		BufferedWriter writer = null;
 		try {
 			writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(filePath,append), charset));
 			writer.write(data);
 		} finally{
-			if(writer!=null){
-				try {
-					writer.flush();
-					writer.close();
-				} catch (Exception e) {
-					LOGGER.error("[write flush or close failure,filepath="+filePath+"]");
-				}
-			}
+			IOUtils.closeQuietly(writer);
 			FILE_LOCK_MAP.get(filePath).writeLock().unlock();
 		}
 		

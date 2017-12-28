@@ -81,15 +81,13 @@ public class CodingUtil {
 	 * @param strName 字符串
 	 * @return 是否是乱码
 	 */
-	public static boolean isMessyCode(String strName) {
-		if(CORRENT_STRS.contains(strName)){
+	public static boolean isMessyCode(String target) {
+		if(CORRENT_STRS.contains(target)){
 			return false;
 		}
-	    Pattern p = Pattern.compile("\\s*|\t*|\r*|\n*");
-	    Matcher m = p.matcher(strName);
-	    String after = m.replaceAll("");
-	    String temp = after.replaceAll("\\p{P}", "");
-	    char[] ch = temp.trim().toCharArray();
+		target = target.replaceAll("\\s+", "");
+		target = target.replaceAll("\\p{P}", "");
+	    char[] ch = target.trim().toCharArray();
 	    float chLength = ch.length;
 	    float count = 0;
 	    for (int i = 0; i < ch.length; i++) {
