@@ -16,7 +16,7 @@ package com.work.common.utils.thread;
 
 public interface Task {
 	public void before();
-	public void execute();
+	public void execute() throws Exception;
 	public void exception(Exception e);
 	public void after();
 }
