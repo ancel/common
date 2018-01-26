@@ -5,6 +5,8 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.sf.json.JSONObject;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -18,6 +20,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.conn.HttpHostConnectException;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
@@ -66,7 +69,6 @@ public class HttpClientUtil {
 			httpPost.setHeaders(headers);
 		}
 		CloseableHttpResponse response = null;
-		HttpEntity entity;
 		ResponseBall ball = new ResponseBall();
 		ball.setUrl(url);
 
@@ -81,7 +83,7 @@ public class HttpClientUtil {
 
 				int statusCode = response.getStatusLine().getStatusCode();
 				ball.setStatusCode(statusCode);
-				entity = response.getEntity();
+				HttpEntity entity = response.getEntity();
 				if (StringUtils.isNotBlank(charset2)) {
 					ball.setCharset(charset2);
 				}
@@ -125,6 +127,84 @@ public class HttpClientUtil {
 			}
 		}
 
+		return ball;
+	}
+	public static ResponseBall reqByPost(CloseableHttpClient httpclient, int connectTimeout, int socketTimeout, String url,
+			String charset, JSONObject data, String charset2,
+			HttpHost httpHost, String cookieSpecs, Header[] headers){
+		RequestConfig config = RequestConfig.custom()
+				.setCookieSpec(cookieSpecs)
+				.setCircularRedirectsAllowed(true)
+				.setConnectTimeout(connectTimeout)
+				.setSocketTimeout(socketTimeout)
+				.setProxy(httpHost).build();
+		HttpPost httpPost = new HttpPost(url);
+		httpPost.setConfig(config);
+		if (null != headers && headers.length > 0) {
+			httpPost.setHeaders(headers);
+		}
+		CloseableHttpResponse response = null;
+		
+		ResponseBall ball = new ResponseBall();
+		ball.setUrl(url);
+		
+		byte[] resposneBytes;
+		boolean flag = true;
+		while (flag) {
+			try {
+				StringEntity reqEntity = new StringEntity(data.toString(),"UTF-8");//解决中文乱码问题    
+				reqEntity.setContentType("application/json");    
+				httpPost.setEntity(reqEntity);
+				
+				// 开始请求
+				response = httpclient.execute(httpPost);
+				
+				int statusCode = response.getStatusLine().getStatusCode();
+				ball.setStatusCode(statusCode);
+				HttpEntity entity = response.getEntity();
+				if (StringUtils.isNotBlank(charset2)) {
+					ball.setCharset(charset2);
+				}
+				resposneBytes = EntityUtils.toByteArray(entity);
+				ball.setContentBytes(resposneBytes);
+				ball.setHeaders(response.getAllHeaders());
+				
+				if (statusCode < 200 && statusCode >= 400) {
+					LOGGER.error(url + "----" + statusCode);
+				} else if (statusCode >= 300 && statusCode < 400) {
+					Header locationHeader = response.getFirstHeader("Location");
+					if (locationHeader != null) {
+						ball = reqByGet(httpclient, locationHeader.getValue(),
+								"UTF-8", null,
+								CookieSpecs.DEFAULT, headers);
+					}
+				}
+				
+				try {
+					httpPost.abort();
+				} finally {
+					response.close();
+					flag = false;
+				}
+			} catch (Exception e) {
+				LOGGER.error("request-------" + url, e);
+				// 代理挂了继续跑
+				if (e instanceof HttpHostConnectException) {
+					LOGGER.error("==============proxy down!!!========");
+					flag = true;
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
+				} else {
+					// 非正常运行结束（除代理挂了的情况），关闭httpclient
+					LOGGER.error("request-------" + url, e);
+					flag = false;
+				}
+			}
+		}
+		
 		return ball;
 	}
 	
