@@ -42,7 +42,9 @@ public class HttpClientUtil {
 
 	public static Header[] defaultHeaders;
 	public static CloseableHttpClient defaultHttpClient;
+//	public static final int defaultConnectTimeout = 5000;
 	public static final int defaultConnectTimeout = 30000;
+//	public static final int defaultSocketTimeout = 5000;
 	public static final int defaultSocketTimeout = 60000;
 	static{
 		List<BasicHeader> headerList = new ArrayList<BasicHeader>();
