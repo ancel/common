@@ -434,6 +434,9 @@ public abstract class StringUtil {
 		if (StringUtils.isBlank(str)) {
 			return "";
 		}
+		if(!str.contains("(")){
+			return str;
+		}
 		Stack<Character> sk = new Stack<Character>();
 		int bracketNum = 0;
 		for (int i = 0; i < str.length(); i++) {

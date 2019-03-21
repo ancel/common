@@ -15,17 +15,20 @@ import com.work.common.utils.LRUCache;
  */  
 
 public abstract class AbstractDAO {
-	LRUCache<String, DataSource> sourceCache = new LRUCache<>(5);
+	private static final LRUCache<String, DataSource> DATA_SOURCE_CACHE = new LRUCache<>(5);
 //	static {
-//		System.setProperty("com.mchange.v2.c3p0.cfg.xml","conf/c3p0-config.xml");
+//		System.setProperty("com.mchange.v2.c3p0.cfg.xml",
+//				"conf/c3p0-config.xml");
 //	}
 	protected QueryRunner runner = new QueryRunner(getDataSource());
 
 	private DataSource getDataSource() {
-		if (null == sourceCache.get(getConfigName())) {
-			sourceCache.put(getConfigName(), new ComboPooledDataSource(getConfigName()));
+		synchronized (DATA_SOURCE_CACHE) {
+			if (!DATA_SOURCE_CACHE.containsKey(getConfigName())) {
+				DATA_SOURCE_CACHE.put(getConfigName(), new ComboPooledDataSource(getConfigName()));
+			}
 		}
-		return sourceCache.get(getConfigName());
+		return DATA_SOURCE_CACHE.get(getConfigName());
 	}
 
 	public abstract String getConfigName();

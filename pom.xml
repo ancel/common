@@ -68,9 +68,9 @@
 
 		<!-- apache工具包 -->
 		<dependency>
-			<groupId>commons-collections</groupId>
-			<artifactId>commons-collections</artifactId>
-			<version>3.2.1</version>
+		    <groupId>org.apache.commons</groupId>
+		    <artifactId>commons-collections4</artifactId>
+		    <version>4.2</version>
 		</dependency>
 		<dependency>
 		    <groupId>org.apache.commons</groupId>
@@ -175,10 +175,15 @@
 		</dependency> 
 
 		<!-- blerkeley DB -->
-		<dependency>
+		<!-- <dependency>
 			<groupId>com.sleepycat</groupId>
 			<artifactId>je</artifactId>
 			<version>6.2.7</version>
+		</dependency> -->
+		<dependency>
+		    <groupId>com.sleepycat</groupId>
+		    <artifactId>je</artifactId>
+		    <version>18.3.12</version>
 		</dependency>
 
 		<!-- freemaker -->
