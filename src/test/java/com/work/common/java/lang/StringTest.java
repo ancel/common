@@ -29,4 +29,10 @@ public class StringTest {
 		System.out.println("\\\"aaa".replaceAll("(\\\\+\")", "\""));
 		System.out.println("文达路22号114".getBytes().length);
 	}
+	
+	@Test
+	public void testLen(){
+		String str = "大连旺盛机电设备有限公司";
+		System.out.println(str.length());
+	}
 }

@@ -1,7 +1,7 @@
 <c3p0-config>
 	<default-config>
 		<property name="driverClass">com.mysql.jdbc.Driver</property>
-		<property name="jdbcUrl">jdbc:mysql://w03.test.yulore.com/yule?useUnicode=true&amp;characterEncoding=utf-8</property>
+		<property name="jdbcUrl">jdbc:mysql://mysql.dcloud.dianhua.cn/yule?useUnicode=true&amp;characterEncoding=utf-8</property>
 		<property name="user">bigdata</property>
 		<property name="password">bigdb@2015qwe</property>
 		<property name="initialPoolSize">5</property>
@@ -13,7 +13,7 @@
 
 	<named-config name="cleanDB">
 		<property name="driverClass">com.mysql.jdbc.Driver</property>
-		<property name="jdbcUrl">jdbc:mysql://w03.test.yulore.com/yule?useUnicode=true&amp;characterEncoding=utf-8</property>
+		<property name="jdbcUrl">jdbc:mysql://mysql.dcloud.dianhua.cn/yule?useUnicode=true&amp;characterEncoding=utf-8</property>
 		<property name="user">bigdata</property>
 		<property name="password">bigdb@2015qwe</property>
 		<property name="initialPoolSize">5</property>
@@ -25,7 +25,7 @@
 	
 	<named-config name="clusterDB">
 		<property name="driverClass">com.mysql.jdbc.Driver</property>
-		<property name="jdbcUrl">jdbc:mysql://w03.test.yulore.com/cluster?useUnicode=true&amp;characterEncoding=utf-8</property>
+		<property name="jdbcUrl">jdbc:mysql://mysql.dcloud.dianhua.cn/cluster?useUnicode=true&amp;characterEncoding=utf-8</property>
 		<property name="user">bigdata</property>
 		<property name="password">bigdb@2015qwe</property>
 		<property name="initialPoolSize">5</property>

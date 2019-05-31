@@ -169,9 +169,11 @@ public class FileUtil {
 		}
 		File targetFile = new File(filePath);
 		filePath = targetFile.getAbsolutePath();
-		synchronized (FILE_LOCK_MAP) {
-			if(!FILE_LOCK_MAP.containsKey(filePath)){
-				FILE_LOCK_MAP.put(filePath, new ReentrantReadWriteLock());
+		if(!FILE_LOCK_MAP.containsKey(filePath)){
+			synchronized (FILE_LOCK_MAP) {
+				if(!FILE_LOCK_MAP.containsKey(filePath)){
+					FILE_LOCK_MAP.put(filePath, new ReentrantReadWriteLock());
+				}
 			}
 		}
 		FILE_LOCK_MAP.get(filePath).writeLock().lock();
@@ -192,6 +194,9 @@ public class FileUtil {
 		
 	}
 	
+	public static void write(File file,String data,String charset,boolean append) throws IOException{
+		write(file.getAbsolutePath(), data, charset, append);
+	}
 	/**
 	 * 写入文件
 	 * @param filePath

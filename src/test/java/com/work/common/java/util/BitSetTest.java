@@ -33,5 +33,23 @@ public class BitSetTest {
 		a |=b;
 		System.out.println(a);
 		
+		System.out.println(3>>6);
+		System.out.println(2>>6);
+		System.out.println(124|99);
+		
+		System.out.println(0|0);
+		System.out.println(0|1);
+		System.out.println(1|0);
+		System.out.println(1|1);
+		
+		System.out.println("-----------");
+		System.out.println(0&0);
+		System.out.println(0&1);
+		System.out.println(1&0);
+		System.out.println(1&1);
+		System.out.println(Long.MAX_VALUE);
+		System.out.println(1L<<64);
+		System.out.println(1L<<128);
+		System.out.println(127&99);
 	}
 }
