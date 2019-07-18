@@ -91,9 +91,8 @@ public class FileRecordHelper {
 
 	/**
 	 * 写数据，若是数据量满足flushNum则刷入文件
-	 * @param errorFileName
+	 * @param filename
 	 * @param line
-	 * @throws IOException 
 	 */
 	@Deprecated
 	public void write(String filename,String line){

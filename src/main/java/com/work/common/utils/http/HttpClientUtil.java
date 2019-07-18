@@ -43,7 +43,7 @@ public class HttpClientUtil {
 	public static Header[] defaultHeaders;
 	public static CloseableHttpClient defaultHttpClient;
 //	public static final int defaultConnectTimeout = 5000;
-	public static final int defaultConnectTimeout = 30000;
+	public static final int defaultConnectTimeout = 60000;
 //	public static final int defaultSocketTimeout = 5000;
 	public static final int defaultSocketTimeout = 60000;
 	static{
@@ -54,7 +54,11 @@ public class HttpClientUtil {
 		headerList.add(new BasicHeader("Connection", "keep-alive"));
 		headerList.add(new BasicHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"));
 		defaultHeaders = headerList.toArray(new BasicHeader[headerList.size()]);
-		defaultHttpClient = HttpClientManager.getHttpClient();
+		try {
+			defaultHttpClient = HttpClientManager.getInstance().createHttpClient();
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		} 
 	}
 	public static ResponseBall reqByPost(CloseableHttpClient httpclient, int connectTimeout, int socketTimeout, String url,
 			String charset, List<NameValuePair> params, String charset2,
@@ -255,6 +259,7 @@ public class HttpClientUtil {
 				try {
 					httpGet.abort();
 				} finally {
+					EntityUtils.consume(entity);  
 					response.close();
 					flag = false;
 				}

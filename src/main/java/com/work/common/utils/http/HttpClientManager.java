@@ -1,12 +1,19 @@
 package com.work.common.utils.http;
 
-import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.CodingErrorAction;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.net.ssl.SSLContext;
@@ -29,38 +36,30 @@ import org.apache.http.conn.socket.PlainConnectionSocketFactory;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.ManagedHttpClientConnectionFactory;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.impl.conn.SystemDefaultDnsResolver;
 import org.apache.http.impl.io.DefaultHttpRequestWriterFactory;
 import org.apache.http.impl.io.DefaultHttpResponseParserFactory;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 
 public final class HttpClientManager{
-	/**
-	 * 最大连接数
-	 */
-	private int MAX_TOTAL_CONNECTIONS = 200;
-	/**
-	 * 每个路由最大连接数
-	 */
-	private int MAX_PER_ROUTE = 100;
-
-	private RequestConfig defaultRequestConfig;
-	private Registry<ConnectionSocketFactory> socketFactoryRegistry;
-	private HttpConnectionFactory<HttpRoute, ManagedHttpClientConnection> connFactory;
-	private SSLConnectionSocketFactory sslConnectionSocketFactory;
-	private SSLConnectionSocketFactory certSSLConnectionSocketFactory;
-	private DnsResolver dnsResolver;
-	private SocketConfig socketConfig;
-	private ConnectionConfig connectionConfig;
-	private int connectTimeout = 30000;
-	private int socketTimeout = 30000;
+	
+	private String protocol = "TLSv1.2";
+	private List<KeyStore> keyStores;
+	// 每个站点的最大连接数
+	private int maxPerRoute = 100;
+	// 链接池最大连接数
+	private int maxTotal = 200;
+	private int connectTimeout = 60_000;
+	private int socketTimeout = 60_000;
+	private CloseableHttpClient defaultHttpClient;
 	
 	static class InstanceHolder{
 		final static HttpClientManager INSTANCE = new HttpClientManager();
@@ -68,22 +67,35 @@ public final class HttpClientManager{
 	public static HttpClientManager getInstance() {
 		return InstanceHolder.INSTANCE;
 	}
-	public HttpClientManager(){
-		init();
+	
+	public HttpClientManager() {
+		keyStores = new ArrayList<KeyStore>();
 	}
-	private void init(){
-		connFactory = new ManagedHttpClientConnectionFactory(
-				new DefaultHttpRequestWriterFactory(),
-				new DefaultHttpResponseParserFactory());
 
-		sslConnectionSocketFactory = getTrustSSLConnectionSocketFactory();
-		socketFactoryRegistry = RegistryBuilder
+	public void addKeyStore(KeyStore keyStore){
+		keyStores.add(keyStore);
+	}
+	
+	public void addKeyStore(String keyStoreFilename, String keyStorePassword, String keyStoreType) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException{
+		final KeyStore trustStore = KeyStore.getInstance(keyStoreType);
+        final FileInputStream inStream = new FileInputStream(keyStoreFilename);
+        try {
+            trustStore.load(inStream, keyStorePassword.toCharArray());
+        } finally {
+            inStream.close();
+        }
+        keyStores.add(trustStore);
+	}
+
+	public PoolingHttpClientConnectionManager getConnectionManager() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException{
+		ConnectionSocketFactory sslConnectionSocketFactory = getSSLConnectionSocketFactory();
+		Registry<ConnectionSocketFactory> socketFactoryRegistry = RegistryBuilder
 				.<ConnectionSocketFactory> create()
 				.register("http", PlainConnectionSocketFactory.INSTANCE)
 				.register("https", sslConnectionSocketFactory)
 				.build();
 
-		dnsResolver = new SystemDefaultDnsResolver() {
+		DnsResolver dnsResolver = new SystemDefaultDnsResolver() {
 			@Override
 			public InetAddress[] resolve(final String host)
 					throws UnknownHostException {
@@ -94,105 +106,87 @@ public final class HttpClientManager{
 					return super.resolve(host);
 				}
 			}
-
 		};
+		HttpConnectionFactory<HttpRoute, ManagedHttpClientConnection> connectionFactory = new ManagedHttpClientConnectionFactory(
+				new DefaultHttpRequestWriterFactory(),
+				new DefaultHttpResponseParserFactory());
 
 		MessageConstraints messageConstraints = MessageConstraints.custom()
 				.build();
-		connectionConfig = ConnectionConfig.custom()
+		ConnectionConfig connectionConfig = ConnectionConfig.custom()
 				.setMalformedInputAction(CodingErrorAction.IGNORE)
 				.setUnmappableInputAction(CodingErrorAction.IGNORE)
 				.setCharset(Consts.UTF_8)
 				.setMessageConstraints(messageConstraints).build();
-
-		socketConfig = SocketConfig.custom().setTcpNoDelay(true).build();
-
-		defaultRequestConfig = RequestConfig
-				.custom()
-				.setCookieSpec(CookieSpecs.DEFAULT)
-				.setExpectContinueEnabled(true)
-				.setTargetPreferredAuthSchemes(
-						Arrays.asList(AuthSchemes.NTLM, AuthSchemes.DIGEST))
-				.setProxyPreferredAuthSchemes(Arrays.asList(AuthSchemes.BASIC))
-				.setConnectTimeout(connectTimeout).setSocketTimeout(socketTimeout).build();
-	}
-	
-	/**
-	 * 跳过ssl验证
-	 * @return
-	 */
-	public SSLConnectionSocketFactory getTrustSSLConnectionSocketFactory(){
-		SSLContext sslContext;
-		try {
-			sslContext = SSLContexts.custom().loadTrustMaterial(new TrustStrategy() {
-						@Override
-						public boolean isTrusted(X509Certificate[] chain, String authType)
-								throws CertificateException {
-							return true;
-						}
-					}).build();
-		} catch (Exception e) {
-			throw new RuntimeException("SSLContext初始化异常!", e);
-		}
-		return new SniSSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
-	}
-
-	public PoolingHttpClientConnectionManager getConnManager() {
-		PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager(
+		
+		//!!!这里一定要设定sockettimeout, 否则https的handshake读取数据会卡死
+		SocketConfig socketConfig = SocketConfig.custom().setTcpNoDelay(true).setSoTimeout(socketTimeout).build();
+		PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager(
 				new SniHttpClientConnectionOperator(socketFactoryRegistry,
-						null, dnsResolver), connFactory, -1,
+						null, dnsResolver), connectionFactory, -1,
 				TimeUnit.MILLISECONDS);
-		connManager.setDefaultSocketConfig(socketConfig);
-		connManager.setDefaultConnectionConfig(connectionConfig);
-		connManager.setMaxTotal(MAX_TOTAL_CONNECTIONS);
-		connManager.setDefaultMaxPerRoute(MAX_PER_ROUTE);
-		return connManager;
+		connectionManager.setDefaultSocketConfig(socketConfig);
+		connectionManager.setDefaultConnectionConfig(connectionConfig);
+		connectionManager.setMaxTotal(maxTotal);
+		connectionManager.setDefaultMaxPerRoute(maxPerRoute);
+		return connectionManager;
+		
 	}
+	public SSLConnectionSocketFactory getSSLConnectionSocketFactory() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException{
+		SSLContext sslContext;
+		SSLContextBuilder sslContextBuilder = SSLContexts.custom().setProtocol(protocol);
+		sslContextBuilder.loadTrustMaterial(new TrustStrategy() {
+			@Override
+			public boolean isTrusted(X509Certificate[] chain, String authType)
+					throws CertificateException {
+				return true;
+			}
+		});
+		if(null!=keyStores&&keyStores.size()>0){
+			for (KeyStore keyStore : keyStores) {
+				sslContextBuilder.loadTrustMaterial(keyStore, new TrustSelfSignedStrategy());
+			}
+		}
+		sslContext = sslContextBuilder.build();
+		return new SniSSLConnectionSocketFactory(sslContext, NoopHostnameVerifier.INSTANCE);
+	}	
 	
-	/**
-	 * 1、浏览器导出证书文件，xx.cer，例如chrome可以打开开发者工具之后选择security，然后点击view certificate导出。或者使用ie打开网页后右键属性导出
-	 * 2、使用keytool工具将证书转换成密钥形式
-     * keytool -import -alias xx -file d:\xx.cer -keystore xx.keystore
-	 * @param keyStorePath
-	 * @param keyStorePassword
-	 * @return
-	 */
-	public static SSLConnectionSocketFactory getSSLConnectionSocketFactory(String keyStorePath,String keyStorePassword){
-		SSLConnectionSocketFactory sslsf = null;
-		SSLContext sslcontext;
-		try {
-			sslcontext = SSLContexts.custom()
-					.loadTrustMaterial(new File(keyStorePath), keyStorePassword.toCharArray(), new TrustSelfSignedStrategy())
-					.build();
-		} catch (Exception e) {
-			throw new RuntimeException("导入证书异常！", e);
-		} 
-		sslsf = new SSLConnectionSocketFactory(sslcontext, NoopHostnameVerifier.INSTANCE);
-		return sslsf;
+	public RequestConfig getRequestConfig(){
+		return RequestConfig.custom()
+			.setCookieSpec(CookieSpecs.DEFAULT)
+			.setExpectContinueEnabled(true)
+			.setTargetPreferredAuthSchemes(
+					Arrays.asList(AuthSchemes.NTLM, AuthSchemes.DIGEST))
+			.setProxyPreferredAuthSchemes(Arrays.asList(AuthSchemes.BASIC))
+			.setConnectTimeout(connectTimeout)
+			.setSocketTimeout(socketTimeout)
+			.build();
 	}
 
-	public CloseableHttpClient getDefaultHttpClient() {
-		CloseableHttpClient httpclient = HttpClients.custom()
-				.setConnectionManager(getConnManager())
-				.setDefaultCookieStore(new BasicCookieStore())
+	public CloseableHttpClient createHttpClient() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
+		return HttpClients.custom()
+				.useSystemProperties()
+				.setConnectionManager(getConnectionManager())
 				.setDefaultCredentialsProvider(new BasicCredentialsProvider())
-				.setDefaultRequestConfig(defaultRequestConfig).build();
-		return httpclient;
+				.setDefaultRequestConfig(getRequestConfig()).build();
 	}
 	
-	public static CloseableHttpClient getHttpClient() {
-		return HttpClientManager.getInstance().getDefaultHttpClient();
+	public HttpClientBuilder getHttpClientBuilder() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
+		return HttpClients.custom()
+				.useSystemProperties()
+				.setConnectionManager(getConnectionManager())
+				.setDefaultCredentialsProvider(new BasicCredentialsProvider())
+				.setDefaultRequestConfig(getRequestConfig());
 	}
 	
-	public CloseableHttpClient getDefaultHttpsClient(String keyStorePath,String keyStorePassword){
-		if(null==certSSLConnectionSocketFactory){
-			certSSLConnectionSocketFactory = getSSLConnectionSocketFactory(keyStorePath, keyStorePassword);
+	public CloseableHttpClient getDefaultHttpClient() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
+		if(null==defaultHttpClient) {
+			synchronized (this) {
+				if(null==defaultHttpClient) {
+					defaultHttpClient = createHttpClient();
+				}
+			}
 		}
-		CloseableHttpClient httpclient = HttpClients.custom()
-				.setConnectionManager(getConnManager())
-				.setDefaultCookieStore(new BasicCookieStore())
-				.setDefaultCredentialsProvider(new BasicCredentialsProvider())
-				.setDefaultRequestConfig(defaultRequestConfig).build();
-		return httpclient;
+		return defaultHttpClient;
 	}
 }
