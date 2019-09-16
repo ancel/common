@@ -1,6 +1,9 @@
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
@@ -14,15 +17,15 @@ import org.jsoup.select.Elements;
 
 import com.work.common.utils.Regex;
 import com.work.common.utils.URLUtil;
-import com.work.common.utils.http.HttpClientManager;
 import com.work.common.utils.http.HttpClientUtil;
+import com.work.common.utils.http.LocalHttpClients;
 import com.work.common.utils.http.ResponseBall;
 
 
 public class BixiaDownload {
-	public static ResponseBall reqByGet(String url) throws ClientProtocolException, IOException{
+	public static ResponseBall reqByGet(String url) throws ClientProtocolException, IOException, KeyManagementException, NoSuchAlgorithmException, KeyStoreException{
 		HttpHost httpHost = new HttpHost("proxy.dianhua.cn", 8080);
-		CloseableHttpClient httpClient = HttpClientManager.getHttpClient();
+		CloseableHttpClient httpClient = new LocalHttpClients().create();
 		int reqNum = 0;
 		while(reqNum<20){
 			try {
@@ -36,11 +39,11 @@ public class BixiaDownload {
 		}
 		return null;
 	}
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
 		String xiaoshuoHomeUrl = "https://www.bxwx.la/b/33/33215/";
 		String xiaoshuoFilePath = "file/小说_3.txt";
 		HttpHost httpHost = new HttpHost("proxy.dianhua.cn", 8080);
-		CloseableHttpClient httpClient = HttpClientManager.getHttpClient();
+		CloseableHttpClient httpClient = new LocalHttpClients().create();
 		ResponseBall ball = HttpClientUtil.reqByGet(httpClient, xiaoshuoHomeUrl,  "utf-8", httpHost, CookieSpecs.DEFAULT, null);
 		Document doc = Jsoup.parse(ball.getContent());
 		Elements es = doc.select("#list dl");

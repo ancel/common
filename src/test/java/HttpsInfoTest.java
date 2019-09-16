@@ -8,7 +8,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 
-public class HttpsTest {
+public class HttpsInfoTest {
     public static void main(String[] args) {
         SSLContext sc;
         try {

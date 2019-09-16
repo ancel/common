@@ -49,32 +49,33 @@ import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
 import org.apache.http.ssl.TrustStrategy;
 
-public final class HttpClientManager{
+public final class LocalHttpClients{
 	
-	private String protocol = "TLSv1.2";
+	private String protocol = "TLSv1.3";
 	private List<KeyStore> keyStores;
 	// 每个站点的最大连接数
 	private int maxPerRoute = 100;
 	// 链接池最大连接数
-	private int maxTotal = 200;
-	private int connectTimeout = 60_000;
-	private int socketTimeout = 60_000;
-	private CloseableHttpClient defaultHttpClient;
+	private int maxTotal = 100;
+	private int connectTimeout = 60000;
+	private int socketTimeout = 60000;
 	
-	static class InstanceHolder{
-		final static HttpClientManager INSTANCE = new HttpClientManager();
-	}
-	public static HttpClientManager getInstance() {
-		return InstanceHolder.INSTANCE;
-	}
-	
-	public HttpClientManager() {
+	public LocalHttpClients() {
 		keyStores = new ArrayList<KeyStore>();
 	}
-
-	public void addKeyStore(KeyStore keyStore){
-		keyStores.add(keyStore);
+	
+	public CloseableHttpClient create() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
+		return getHttpClientBuilder().build();
 	}
+	
+	public HttpClientBuilder getHttpClientBuilder() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
+		return HttpClients.custom()
+				.useSystemProperties()
+				.setConnectionManager(getConnectionManager())
+				.setDefaultCredentialsProvider(new BasicCredentialsProvider())
+				.setDefaultRequestConfig(getRequestConfig());
+	}
+	
 	
 	public void addKeyStore(String keyStoreFilename, String keyStorePassword, String keyStoreType) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException{
 		final KeyStore trustStore = KeyStore.getInstance(keyStoreType);
@@ -162,31 +163,59 @@ public final class HttpClientManager{
 			.setSocketTimeout(socketTimeout)
 			.build();
 	}
+	
 
-	public CloseableHttpClient createHttpClient() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
-		return HttpClients.custom()
-				.useSystemProperties()
-				.setConnectionManager(getConnectionManager())
-				.setDefaultCredentialsProvider(new BasicCredentialsProvider())
-				.setDefaultRequestConfig(getRequestConfig()).build();
+	public void addKeyStore(KeyStore keyStore){
+		keyStores.add(keyStore);
+	}
+
+	public String getProtocol() {
+		return protocol;
+	}
+
+	public void setProtocol(String protocol) {
+		this.protocol = protocol;
+	}
+
+	public List<KeyStore> getKeyStores() {
+		return keyStores;
+	}
+
+	public void setKeyStores(List<KeyStore> keyStores) {
+		this.keyStores = keyStores;
+	}
+
+	public int getMaxPerRoute() {
+		return maxPerRoute;
+	}
+
+	public void setMaxPerRoute(int maxPerRoute) {
+		this.maxPerRoute = maxPerRoute;
+	}
+
+	public int getMaxTotal() {
+		return maxTotal;
+	}
+
+	public void setMaxTotal(int maxTotal) {
+		this.maxTotal = maxTotal;
+	}
+
+	public int getConnectTimeout() {
+		return connectTimeout;
+	}
+
+	public void setConnectTimeout(int connectTimeout) {
+		this.connectTimeout = connectTimeout;
+	}
+
+	public int getSocketTimeout() {
+		return socketTimeout;
+	}
+
+	public void setSocketTimeout(int socketTimeout) {
+		this.socketTimeout = socketTimeout;
 	}
 	
-	public HttpClientBuilder getHttpClientBuilder() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
-		return HttpClients.custom()
-				.useSystemProperties()
-				.setConnectionManager(getConnectionManager())
-				.setDefaultCredentialsProvider(new BasicCredentialsProvider())
-				.setDefaultRequestConfig(getRequestConfig());
-	}
 	
-	public CloseableHttpClient getDefaultHttpClient() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException {
-		if(null==defaultHttpClient) {
-			synchronized (this) {
-				if(null==defaultHttpClient) {
-					defaultHttpClient = createHttpClient();
-				}
-			}
-		}
-		return defaultHttpClient;
-	}
 }

@@ -55,7 +55,7 @@ public class HttpClientUtil {
 		headerList.add(new BasicHeader("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/36.0.1985.125 Safari/537.36"));
 		defaultHeaders = headerList.toArray(new BasicHeader[headerList.size()]);
 		try {
-			defaultHttpClient = HttpClientManager.getInstance().createHttpClient();
+			defaultHttpClient = new LocalHttpClients().create();
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		} 

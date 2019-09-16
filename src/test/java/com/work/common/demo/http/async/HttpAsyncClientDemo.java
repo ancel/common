@@ -2,6 +2,9 @@ package com.work.common.demo.http.async;
 
 import java.io.IOException;
 import java.nio.CharBuffer;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -17,12 +20,16 @@ import org.apache.http.nio.IOControl;
 import org.apache.http.nio.client.methods.AsyncCharConsumer;
 import org.apache.http.nio.client.methods.HttpAsyncMethods;
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
+import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 
+import com.work.common.utils.http.LocalHttpAsyncClients;
+
 public class HttpAsyncClientDemo {
-	public static void main(String[] args) throws InterruptedException, ExecutionException {
-		CloseableHttpAsyncClient httpclient = HttpAsyncClients.createDefault();
+	public static void main(String[] args) throws InterruptedException, ExecutionException, KeyManagementException, NoSuchAlgorithmException, KeyStoreException, IOReactorException {
+		CloseableHttpAsyncClient httpclient = new LocalHttpAsyncClients().create();
+//		CloseableHttpAsyncClient httpclient = HttpAsyncClients.createDefault();
 		try {
 		    // Start the client
 		    httpclient.start();
@@ -41,6 +48,7 @@ public class HttpAsyncClientDemo {
 
 		        public void completed(final HttpResponse response2) {
 		            latch1.countDown();
+		            System.out.println(request2.getRequestLine() + "->" + response2.getStatusLine());
 		            try {
 						System.out.println(EntityUtils.toString(response2.getEntity()));
 					} catch (ParseException e) {
@@ -50,7 +58,6 @@ public class HttpAsyncClientDemo {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-		            System.out.println(request2.getRequestLine() + "->" + response2.getStatusLine());
 		        }
 
 		        public void failed(final Exception ex) {
@@ -87,9 +94,9 @@ public class HttpAsyncClientDemo {
 		        protected void onCharReceived(final CharBuffer buf, final IOControl ioctrl) throws IOException {
 		            // Do something useful
 		        	System.out.println("onCharReceived----"+buf.length());
-		        	while (buf.hasRemaining()) {
-		        		System.out.println(buf.get());
-		            }
+//		        	while (buf.hasRemaining()) {
+//		        		System.out.print(buf.get());
+//		            }
 		        }
 
 		        @Override

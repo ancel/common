@@ -1,5 +1,8 @@
 package com.work.common.test;
 
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,8 +15,8 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.message.BasicHeader;
 import org.junit.Test;
 
-import com.work.common.utils.http.HttpClientManager;
 import com.work.common.utils.http.HttpClientUtil;
+import com.work.common.utils.http.LocalHttpClients;
 import com.work.common.utils.http.ResponseBall;
 
 public class QichachaTest {
@@ -22,7 +25,19 @@ public class QichachaTest {
 		List<BasicHeader> headerList = new ArrayList<BasicHeader>();
 		Header[] headers = null;
 		
-		CloseableHttpClient httpclient = HttpClientManager.getHttpClient();
+		CloseableHttpClient httpclient = null;
+		try {
+			httpclient = new LocalHttpClients().create();
+		} catch (KeyManagementException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (KeyStoreException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		HttpHost httpHost = null;
 		String url;
 		String reqBody;
