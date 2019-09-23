@@ -1,37 +1,23 @@
 package com.work.common.utils.http;
 
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.CodingErrorAction;
 import java.security.KeyManagementException;
-import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import javax.net.ssl.SSLContext;
 
 import org.apache.http.Consts;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.ParseException;
-import org.apache.http.client.config.AuthSchemes;
-import org.apache.http.client.config.CookieSpecs;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.config.MessageConstraints;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
 import org.apache.http.conn.DnsResolver;
-import org.apache.http.conn.ssl.DefaultHostnameVerifier;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.DefaultHttpResponseFactory;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -61,37 +47,32 @@ import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.reactor.SessionInputBuffer;
 import org.apache.http.nio.util.HeapByteBufferAllocator;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
-import org.apache.http.ssl.TrustStrategy;
 import org.apache.http.util.CharArrayBuffer;
 
-public final class LocalHttpAsyncClients{
-	
-	private String protocol = "TLSv1.2";
-	private List<KeyStore> keyStores;
-	// 每个站点的最大连接数
-	private int maxPerRoute = 100;
-	// 链接池最大连接数
-	private int maxTotal = 100;
-	private int connectTimeout = 60000;
-	private int socketTimeout = 60000;
+public final class LocalHttpAsyncClients extends MyHttpClients{
 	
 	private int ioThreadCount = Runtime.getRuntime().availableProcessors();
+	private HttpAsyncClientBuilder httpAsyncClientBuilder;
 	
-	public LocalHttpAsyncClients() {
-		keyStores = new ArrayList<KeyStore>();
-	}
 	public CloseableHttpAsyncClient create() throws KeyManagementException, NoSuchAlgorithmException, KeyStoreException, IOReactorException {
-		return getHttpAsyncClientBuilder().build();
+		if(null==httpAsyncClientBuilder) {
+			synchronized (this) {
+				if(null==httpAsyncClientBuilder){
+					httpAsyncClientBuilder = createHttpAsyncClientBuilder();
+				}
+			}
+		}
+		return httpAsyncClientBuilder.build();
 	}
-	public HttpAsyncClientBuilder getHttpAsyncClientBuilder() throws KeyManagementException, IOReactorException, NoSuchAlgorithmException, KeyStoreException {
+	
+	public HttpAsyncClientBuilder createHttpAsyncClientBuilder() throws KeyManagementException, IOReactorException, NoSuchAlgorithmException, KeyStoreException {
 		return HttpAsyncClients.custom()
 	            .setConnectionManager(getConnManager())
 	            .setDefaultCookieStore(new BasicCookieStore())
 	            .setDefaultCredentialsProvider(new BasicCredentialsProvider())
 	            .setDefaultRequestConfig(getRequestConfig());
 	}
+	
 
 	private PoolingNHttpClientConnectionManager getConnManager() throws IOReactorException, KeyManagementException, NoSuchAlgorithmException, KeyStoreException{
 		 // Use custom message parser / writer to customize the way HTTP
@@ -111,7 +92,6 @@ public final class LocalHttpAsyncClients{
                             return new BasicHeader(buffer.toString(), null);
                         }
                     }
-
                 };
                 return new DefaultHttpResponseParser(
                         buffer, lineParser, DefaultHttpResponseFactory.INSTANCE, constraints);
@@ -131,7 +111,7 @@ public final class LocalHttpAsyncClients{
         // protocol schemes.
         Registry<SchemeIOSessionStrategy> sessionStrategyRegistry = RegistryBuilder.<SchemeIOSessionStrategy>create()
             .register("http", NoopIOSessionStrategy.INSTANCE)
-            .register("https", new SSLIOSessionStrategy(getSSLContext(), new DefaultHostnameVerifier()))
+            .register("https", new SSLIOSessionStrategy(getSSLContext(), NoopHostnameVerifier.INSTANCE))
             .build();
 
         // Use custom DNS resolver to override the system DNS resolution.
@@ -185,91 +165,12 @@ public final class LocalHttpAsyncClients{
 		
 	}
 	
-	private SSLContext getSSLContext() throws NoSuchAlgorithmException, KeyStoreException, KeyManagementException{
-		SSLContextBuilder sslContextBuilder = SSLContexts.custom().setProtocol(protocol);
-		sslContextBuilder.loadTrustMaterial(new TrustStrategy() {
-			@Override
-			public boolean isTrusted(X509Certificate[] chain, String authType)
-					throws CertificateException {
-				return true;
-			}
-		});
-		if(null!=keyStores&&keyStores.size()>0){
-			for (KeyStore keyStore : keyStores) {
-				sslContextBuilder.loadTrustMaterial(keyStore, new TrustSelfSignedStrategy());
-			}
-		}
-		return sslContextBuilder.build();
-	}	
 	
-	private RequestConfig getRequestConfig(){
-		return RequestConfig.custom()
-			.setCookieSpec(CookieSpecs.DEFAULT)
-			.setExpectContinueEnabled(true)
-			.setTargetPreferredAuthSchemes(Arrays.asList(AuthSchemes.NTLM, AuthSchemes.DIGEST))
-			.setProxyPreferredAuthSchemes(Arrays.asList(AuthSchemes.BASIC))
-			.setConnectTimeout(connectTimeout)
-			.setSocketTimeout(socketTimeout)
-			.build();
+	public HttpAsyncClientBuilder getHttpAsyncClientBuilder() {
+		return httpAsyncClientBuilder;
 	}
-	
-	public void addKeyStore(String keyStoreFilename, String keyStorePassword, String keyStoreType) throws KeyStoreException, NoSuchAlgorithmException, CertificateException, IOException{
-		final KeyStore trustStore = KeyStore.getInstance(keyStoreType);
-        final FileInputStream inStream = new FileInputStream(keyStoreFilename);
-        try {
-            trustStore.load(inStream, keyStorePassword.toCharArray());
-        } finally {
-            inStream.close();
-        }
-        keyStores.add(trustStore);
-	}
-
-	public String getProtocol() {
-		return protocol;
-	}
-
-	public void setProtocol(String protocol) {
-		this.protocol = protocol;
-	}
-
-	public List<KeyStore> getKeyStores() {
-		return keyStores;
-	}
-
-	public void setKeyStores(List<KeyStore> keyStores) {
-		this.keyStores = keyStores;
-	}
-
-	public int getMaxPerRoute() {
-		return maxPerRoute;
-	}
-
-	public void setMaxPerRoute(int maxPerRoute) {
-		this.maxPerRoute = maxPerRoute;
-	}
-
-	public int getMaxTotal() {
-		return maxTotal;
-	}
-
-	public void setMaxTotal(int maxTotal) {
-		this.maxTotal = maxTotal;
-	}
-
-	public int getConnectTimeout() {
-		return connectTimeout;
-	}
-
-	public void setConnectTimeout(int connectTimeout) {
-		this.connectTimeout = connectTimeout;
-	}
-
-	public int getSocketTimeout() {
-		return socketTimeout;
-	}
-
-	public void setSocketTimeout(int socketTimeout) {
-		this.socketTimeout = socketTimeout;
+	public void setHttpAsyncClientBuilder(HttpAsyncClientBuilder httpAsyncClientBuilder) {
+		this.httpAsyncClientBuilder = httpAsyncClientBuilder;
 	}
 
 	public int getIoThreadCount() {
@@ -279,6 +180,4 @@ public final class LocalHttpAsyncClients{
 	public void setIoThreadCount(int ioThreadCount) {
 		this.ioThreadCount = ioThreadCount;
 	}
-	
-	
 }
