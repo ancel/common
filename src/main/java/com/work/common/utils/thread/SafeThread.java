@@ -24,8 +24,6 @@ public class SafeThread implements Runnable{
 			task.execute();
 		} catch (Exception e) {
 			task.exception(e);
-			//线程发生未知异常，需直接退出，避免executservice线程池中线程发生异常后，其他线程正常运行
-			System.exit(1);
 		}finally{
 			task.after();
 		}
